@@ -5,10 +5,10 @@
 🌐 **Live Game**: [https://kana-escape-room.ai.studio/](https://kana-escape-room.ai.studio/)
 
 [![Play Live](https://img.shields.io/badge/Play_Live-kana--escape--room.ai.studio-emerald?style=for-the-badge&logo=googlechrome&logoColor=white)](https://kana-escape-room.ai.studio/)
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
-![React: 19](https://img.shields.io/badge/React-19-blue.svg)
-![TypeScript: 5](https://img.shields.io/badge/TypeScript-5-blue.svg)
-![Tailwind: 4](https://img.shields.io/badge/TailwindCSS-v4-cyan.svg)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)]
+[![React: 19](https://img.shields.io/badge/React-19-blue.svg)]
+[![TypeScript: 5](https://img.shields.io/badge/TypeScript-5-blue.svg)]
+[![Tailwind: 4](https://img.shields.io/badge/TailwindCSS-v4-cyan.svg)]
 
 ---
 
@@ -79,7 +79,7 @@ Make sure you have [Node.js](https://nodejs.org/) installed:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/vchs-studios/kana-escape-room.git
+git clone https://github.com/17arigato-jwd/kana-escape-room.git
 cd kana-escape-room
 ```
 
