@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#121124" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background Canvas -->
+  <rect width="64" height="64" rx="14" fill="#121124"/>
+  <rect x="2" y="2" width="60" height="60" rx="12" fill="none" stroke="#f59e0b" stroke-width="2" opacity="0.6"/>
+
+  <!-- Ambient Glow -->
+  <circle cx="32" cy="34" r="24" fill="url(#glow)"/>
+
+  <!-- Pixel Torii Gate Top Bar (Kasagi) -->
+  <path d="M 8 16 L 56 16 L 54 21 L 10 21 Z" fill="#ef4444"/>
+  <rect x="12" y="21" width="40" height="3" fill="#dc2626"/>
+
+  <!-- Torii Sub Bar (Shimaki) -->
+  <rect x="14" y="27" width="36" height="4" fill="#ef4444"/>
+
+  <!-- Torii Pillars -->
+  <rect x="18" y="27" width="6" height="26" fill="#b91c1c"/>
+  <rect x="19" y="27" width="3" height="26" fill="#ef4444"/>
+  <rect x="40" y="27" width="6" height="26" fill="#b91c1c"/>
+  <rect x="41" y="27" width="3" height="26" fill="#ef4444"/>
+
+  <!-- Pillar Stone Bases -->
+  <rect x="16" y="49" width="10" height="4" rx="1" fill="#475569"/>
+  <rect x="38" y="49" width="10" height="4" rx="1" fill="#475569"/>
+
+  <!-- Golden Key Emblem in Portal Center -->
+  <!-- Key Bow / Ring -->
+  <circle cx="32" cy="33" r="5.5" fill="#f59e0b"/>
+  <circle cx="32" cy="33" r="3" fill="#121124"/>
+  <!-- Key Shaft -->
+  <rect x="30.5" y="38" width="3" height="10" fill="#f59e0b"/>
+  <!-- Key Teeth -->
+  <rect x="33.5" y="41" width="3.5" height="2.5" fill="#f59e0b"/>
+  <rect x="33.5" y="45" width="4.5" height="2.5" fill="#f59e0b"/>
+
+  <!-- Star Sparkle -->
+  <path d="M 47 13 L 49 10 L 51 13 L 54 15 L 51 17 L 49 20 L 47 17 L 44 15 Z" fill="#fef08a"/>
+</svg>

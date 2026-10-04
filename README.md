@@ -2,6 +2,9 @@
 
 > **An open-source retro pixel-art Japanese language learning escape room game created by VCHS Studios using AI.**
 
+🌐 **Live Game**: [https://kana-escape-room.ai.studio/](https://kana-escape-room.ai.studio/)
+
+[![Play Live](https://img.shields.io/badge/Play_Live-kana--escape--room.ai.studio-emerald?style=for-the-badge&logo=googlechrome&logoColor=white)](https://kana-escape-room.ai.studio/)
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 ![React: 19](https://img.shields.io/badge/React-19-blue.svg)
 ![TypeScript: 5](https://img.shields.io/badge/TypeScript-5-blue.svg)

@@ -2,5 +2,7 @@
   "name": "Kana Escape Room",
   "description": "A retro pixel-art Japanese kana learning escape-room game. Explore rooms, complete arcade minigames, collect Hiragana & Katakana, craft Japanese words, and escape!",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }
