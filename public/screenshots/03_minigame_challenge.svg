@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450">
+  <defs>
+    <radialGradient id="crtScreenGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#022c22" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#020617" stop-opacity="1"/>
+    </radialGradient>
+    <pattern id="scanlines2" width="100" height="4" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="0" x2="100" y2="0" stroke="#000000" stroke-width="0.8" opacity="0.3"/>
+    </pattern>
+  </defs>
+
+  <style>
+    .font-pixel { font-family: 'Press Start 2P', monospace, sans-serif; }
+    .font-kana { font-family: 'DotGothic16', monospace, sans-serif; font-weight: bold; }
+  </style>
+
+  <!-- Dark Background Backdrop -->
+  <rect width="800" height="450" fill="#080711"/>
+
+  <!-- Arcade Cabinet Outer Border -->
+  <rect x="130" y="20" width="540" height="410" rx="10" fill="#18181b" stroke="#06b6d4" stroke-width="5"/>
+  <rect x="138" y="28" width="524" height="394" rx="8" fill="url(#crtScreenGlow)"/>
+
+  <!-- Cabinet Header Bar -->
+  <rect x="145" y="35" width="510" height="40" fill="#0f172a" stroke="#0284c7" stroke-width="2"/>
+  <text x="165" y="60" class="font-pixel" font-size="11" fill="#38bdf8">TRIAL: 2048 FUSION CORE</text>
+  <text x="560" y="60" class="font-pixel" font-size="10" fill="#facc15">SCORE: 512</text>
+
+  <!-- Left: Objective & Reward Box -->
+  <rect x="160" y="90" width="150" height="190" fill="#090d16" stroke="#334155" stroke-width="2" rx="4"/>
+  <text x="235" y="115" text-anchor="middle" class="font-pixel" font-size="8" fill="#94a3b8">KANA REWARD</text>
+
+  <!-- Big Kana Reward Tile -->
+  <rect x="195" y="128" width="80" height="80" rx="4" fill="#1e1b4b" stroke="#facc15" stroke-width="3"/>
+  <text x="235" y="180" text-anchor="middle" class="font-kana" font-size="42" fill="#facc15">ぎ</text>
+  <text x="235" y="230" text-anchor="middle" class="font-pixel" font-size="9" fill="#fef08a">ROMAJI: &quot;gi&quot;</text>
+  <text x="235" y="248" text-anchor="middle" class="font-pixel" font-size="8" fill="#34d399">TARGET: 128 TILE</text>
+  <text x="235" y="265" text-anchor="middle" class="font-pixel" font-size="7" fill="#64748b">STATUS: UNLOCKED!</text>
+
+  <!-- Center/Right: 2048 Grid -->
+  <rect x="330" y="90" width="310" height="280" rx="6" fill="#0f172a" stroke="#06b6d4" stroke-width="3"/>
+
+  <!-- 4x4 Grid Cells -->
+  <!-- Row 1 -->
+  <rect x="345" y="105" width="60" height="55" rx="3" fill="#e2e8f0"/>
+  <text x="375" y="138" text-anchor="middle" class="font-pixel" font-size="14" fill="#1e293b">2</text>
+  <rect x="415" y="105" width="60" height="55" rx="3" fill="#fed7aa"/>
+  <text x="445" y="138" text-anchor="middle" class="font-pixel" font-size="14" fill="#1e293b">4</text>
+  <rect x="485" y="105" width="60" height="55" rx="3" fill="#fca5a5"/>
+  <text x="515" y="138" text-anchor="middle" class="font-pixel" font-size="14" fill="#ffffff">8</text>
+  <rect x="555" y="105" width="60" height="55" rx="3" fill="#f87171"/>
+  <text x="585" y="138" text-anchor="middle" class="font-pixel" font-size="14" fill="#ffffff">16</text>
+
+  <!-- Row 2 -->
+  <rect x="345" y="170" width="60" height="55" rx="3" fill="#fb923c"/>
+  <text x="375" y="203" text-anchor="middle" class="font-pixel" font-size="13" fill="#ffffff">32</text>
+  <rect x="415" y="170" width="60" height="55" rx="3" fill="#ea580c"/>
+  <text x="445" y="203" text-anchor="middle" class="font-pixel" font-size="13" fill="#ffffff">64</text>
+  <!-- Glowing Target 128 Tile! -->
+  <rect x="485" y="170" width="60" height="55" rx="3" fill="#facc15" stroke="#ffffff" stroke-width="2"/>
+  <text x="515" y="203" text-anchor="middle" class="font-pixel" font-size="12" fill="#000000">128</text>
+  <rect x="555" y="170" width="60" height="55" rx="3" fill="#1e293b" opacity="0.4"/>
+
+  <!-- Row 3 -->
+  <rect x="345" y="235" width="60" height="55" rx="3" fill="#fed7aa"/>
+  <text x="375" y="268" text-anchor="middle" class="font-pixel" font-size="14" fill="#1e293b">4</text>
+  <rect x="415" y="235" width="60" height="55" rx="3" fill="#e2e8f0"/>
+  <text x="445" y="268" text-anchor="middle" class="font-pixel" font-size="14" fill="#1e293b">2</text>
+  <rect x="485" y="235" width="60" height="55" rx="3" fill="#1e293b" opacity="0.4"/>
+  <rect x="555" y="235" width="60" height="55" rx="3" fill="#1e293b" opacity="0.4"/>
+
+  <!-- Row 4 -->
+  <rect x="345" y="300" width="60" height="55" rx="3" fill="#1e293b" opacity="0.4"/>
+  <rect x="415" y="300" width="60" height="55" rx="3" fill="#1e293b" opacity="0.4"/>
+  <rect x="485" y="300" width="60" height="55" rx="3" fill="#1e293b" opacity="0.4"/>
+  <rect x="555" y="300" width="60" height="55" rx="3" fill="#1e293b" opacity="0.4"/>
+
+  <!-- Victory Banner Popup Inside Minigame -->
+  <rect x="180" y="325" width="440" height="42" fill="#14532d" stroke="#22c55e" stroke-width="2" rx="3"/>
+  <text x="400" y="348" text-anchor="middle" class="font-pixel" font-size="10" fill="#86efac">★ TRIAL CLEARED! KANA &quot;ぎ&quot; ACQUIRED! ★</text>
+  <text x="400" y="360" text-anchor="middle" class="font-pixel" font-size="7" fill="#cbd5e1">Press [E] or [ESC] to collect into inventory</text>
+
+  <!-- Footer Help -->
+  <text x="400" y="405" text-anchor="middle" class="font-pixel" font-size="8" fill="#64748b">Use Arrow Keys / WASD or Swipe to Slide Tiles</text>
+
+  <!-- Scanline Layer -->
+  <rect x="138" y="28" width="524" height="394" fill="url(#scanlines2)" pointer-events="none"/>
+</svg>

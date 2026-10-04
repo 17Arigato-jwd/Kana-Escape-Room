@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0d0c1d"/>
+      <stop offset="60%" stop-color="#191730"/>
+      <stop offset="100%" stop-color="#0a0914"/>
+    </linearGradient>
+    <radialGradient id="portalGlow" cx="50%" cy="38%" r="40%">
+      <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.35"/>
+      <stop offset="50%" stop-color="#ef4444" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="scanlines" width="100" height="4" patternUnits="userSpaceOnUse">
+      <line x1="0" y1="0" x2="100" y2="0" stroke="#ffffff" stroke-width="0.3" opacity="0.04"/>
+    </pattern>
+    <pattern id="pixelGrid" width="16" height="16" patternUnits="userSpaceOnUse">
+      <rect width="16" height="16" fill="none" stroke="#ffffff" stroke-width="0.5" opacity="0.02"/>
+    </pattern>
+  </defs>
+
+  <style>
+    .font-pixel { font-family: 'Press Start 2P', monospace, 'Courier New', sans-serif; font-weight: bold; }
+    .font-kana { font-family: 'DotGothic16', 'Hiragino Kaku Gothic Pro', 'Meiryo', sans-serif; font-weight: bold; }
+  </style>
+
+  <!-- Background Base -->
+  <rect width="800" height="450" fill="url(#bgGrad)"/>
+  <rect width="800" height="450" fill="url(#pixelGrid)"/>
+  <circle cx="400" cy="160" r="180" fill="url(#portalGlow)"/>
+
+  <!-- CRT Bezel Border -->
+  <rect x="12" y="12" width="776" height="426" rx="8" fill="none" stroke="#2a274c" stroke-width="4"/>
+  <rect x="16" y="16" width="768" height="418" rx="6" fill="none" stroke="#f59e0b" stroke-width="2" opacity="0.7"/>
+
+  <!-- Torii Gate Pixel Illustration -->
+  <!-- Top Arch (Kasagi) -->
+  <path d="M 310 95 L 490 95 L 485 106 L 315 106 Z" fill="#ef4444"/>
+  <path d="M 295 90 L 320 95 L 315 102 L 300 97 Z" fill="#b91c1c"/>
+  <path d="M 505 90 L 480 95 L 485 102 L 500 97 Z" fill="#b91c1c"/>
+  <rect x="330" y="106" width="140" height="5" fill="#b91c1c"/>
+  <!-- Sub Beam (Shimaki) -->
+  <rect x="340" y="118" width="120" height="8" fill="#ef4444"/>
+  <!-- Pillars -->
+  <rect x="355" y="126" width="14" height="65" fill="#b91c1c"/>
+  <rect x="358" y="126" width="7" height="65" fill="#ef4444"/>
+  <rect x="431" y="126" width="14" height="65" fill="#b91c1c"/>
+  <rect x="434" y="126" width="7" height="65" fill="#ef4444"/>
+  <!-- Stone Pillar Bases -->
+  <rect x="351" y="185" width="22" height="8" rx="1" fill="#475569"/>
+  <rect x="427" y="185" width="22" height="8" rx="1" fill="#475569"/>
+
+  <!-- Golden Key Floating in Center of Torii -->
+  <circle cx="400" cy="148" r="14" fill="#f59e0b"/>
+  <circle cx="400" cy="148" r="8" fill="#191730"/>
+  <rect x="397" y="160" width="6" height="24" fill="#f59e0b"/>
+  <rect x="403" y="168" width="8" height="5" fill="#f59e0b"/>
+  <rect x="403" y="176" width="10" height="5" fill="#f59e0b"/>
+  <!-- Sparkles -->
+  <path d="M 440 90 L 442 84 L 444 90 L 450 92 L 444 94 L 442 100 L 440 94 L 434 92 Z" fill="#fef08a"/>
+  <path d="M 330 140 L 332 135 L 334 140 L 339 142 L 334 144 L 332 149 L 330 144 L 325 142 Z" fill="#fef08a"/>
+
+  <!-- Japanese Sub-Title Header -->
+  <text x="400" y="55" text-anchor="middle" class="font-kana" font-size="20" fill="#fef08a" letter-spacing="4">★ 16-BIT JAPANESE ESCAPE ADVENTURE ★</text>
+
+  <!-- Main Game Title -->
+  <text x="402" y="232" text-anchor="middle" class="font-pixel" font-size="28" fill="#000000" letter-spacing="2">KANA ESCAPE ROOM</text>
+  <text x="400" y="230" text-anchor="middle" class="font-pixel" font-size="28" fill="#facc15" letter-spacing="2">KANA ESCAPE ROOM</text>
+  <text x="400" y="260" text-anchor="middle" class="font-kana" font-size="18" fill="#38bdf8" letter-spacing="6">かな脱出 — FORGE THE KEY WORDS TO FLEE</text>
+
+  <!-- Character Explorer Cards -->
+  <!-- Explorer 1: Ren -->
+  <rect x="180" y="280" width="130" height="85" rx="3" fill="#111827" stroke="#38bdf8" stroke-width="2"/>
+  <text x="245" y="302" text-anchor="middle" class="font-pixel" font-size="9" fill="#38bdf8">REN (CIPHER)</text>
+  <!-- Pixel avatar preview -->
+  <rect x="235" y="312" width="20" height="24" fill="#38bdf8" rx="2"/>
+  <rect x="238" y="316" width="14" height="10" fill="#fed7aa"/>
+  <rect x="240" y="320" width="3" height="3" fill="#111827"/>
+  <rect x="247" y="320" width="3" height="3" fill="#111827"/>
+  <text x="245" y="354" text-anchor="middle" class="font-pixel" font-size="7" fill="#94a3b8">BALANCED EXPLORER</text>
+
+  <!-- Explorer 2: Aoi (Selected) -->
+  <rect x="335" y="275" width="130" height="95" rx="3" fill="#1e1b4b" stroke="#facc15" stroke-width="3"/>
+  <text x="400" y="297" text-anchor="middle" class="font-pixel" font-size="10" fill="#facc15">AOI (SCHOLAR)</text>
+  <rect x="390" y="308" width="20" height="24" fill="#db2777" rx="2"/>
+  <rect x="393" y="312" width="14" height="10" fill="#ffedd5"/>
+  <rect x="395" y="315" width="3" height="3" fill="#111827"/>
+  <rect x="402" y="315" width="3" height="3" fill="#111827"/>
+  <text x="400" y="348" text-anchor="middle" class="font-pixel" font-size="8" fill="#4ade80">✓ SELECTED</text>
+  <text x="400" y="360" text-anchor="middle" class="font-pixel" font-size="7" fill="#cbd5e1">KANJI INTUITION</text>
+
+  <!-- Explorer 3: Bob -->
+  <rect x="490" y="280" width="130" height="85" rx="3" fill="#111827" stroke="#64748b" stroke-width="2"/>
+  <text x="555" y="302" text-anchor="middle" class="font-pixel" font-size="9" fill="#94a3b8">BOB (TINKERER)</text>
+  <rect x="545" y="312" width="20" height="24" fill="#65a30d" rx="2"/>
+  <rect x="548" y="316" width="14" height="10" fill="#fed7aa"/>
+  <rect x="550" y="320" width="3" height="3" fill="#111827"/>
+  <rect x="557" y="320" width="3" height="3" fill="#111827"/>
+  <text x="555" y="354" text-anchor="middle" class="font-pixel" font-size="7" fill="#94a3b8">MECHANIC SPECIAL</text>
+
+  <!-- Action Buttons -->
+  <!-- Start Button -->
+  <rect x="250" y="385" width="170" height="34" rx="2" fill="#eab308" stroke="#ffffff" stroke-width="2"/>
+  <text x="335" y="407" text-anchor="middle" class="font-pixel" font-size="11" fill="#000000">▶ START ESCAPE</text>
+
+  <!-- Hall of Fame Button -->
+  <rect x="435" y="385" width="170" height="34" rx="2" fill="#1e293b" stroke="#94a3b8" stroke-width="2"/>
+  <text x="520" y="407" text-anchor="middle" class="font-pixel" font-size="11" fill="#f8fafc">🏆 HALL OF FAME</text>
+
+  <!-- Scanline Overlay -->
+  <rect width="800" height="450" fill="url(#scanlines)" pointer-events="none"/>
+</svg>

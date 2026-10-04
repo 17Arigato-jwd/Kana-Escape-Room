@@ -57,6 +57,55 @@ Trapped inside mysterious chambers, you explore retro workshops, ancient archive
 
 ---
 
+## 📸 In-Game Screenshots (Gameplay Journey)
+
+Here is a visual walk-through of the game experience across different points in time:
+
+### 1. Title Screen & Explorer Selection
+*Select your adventurer (Ren, Aoi, or Bob) and jump straight into the mystery, or inspect the local Hall of Fame.*
+
+<p align="center">
+  <img src="public/screenshots/01_title_screen.svg" alt="Title Screen & Explorer Selection" width="100%" />
+</p>
+
+---
+
+### 2. Exploring Room 1 — The Detective's Workshop
+*Navigate the 16-bit retro computing lab with authentic 8-directional movement, footstep sounds, ambient dust motes, and interactable consoles.*
+
+<p align="center">
+  <img src="public/screenshots/02_workshop_exploration.svg" alt="Room 1 Workshop Exploration" width="100%" />
+</p>
+
+---
+
+### 3. Solving Arcade Puzzles & Minigames
+*Tackle 20+ diverse arcade stations (2048, Snake, Passcode Decryption, Pong, Trajectory Launcher, and more) to earn Kana syllables.*
+
+<p align="center">
+  <img src="public/screenshots/03_minigame_challenge.svg" alt="Arcade Minigame Trial" width="100%" />
+</p>
+
+---
+
+### 4. Word Crafting Workbench & Gateway Unlocking
+*Combine collected Kana tiles on the forging slots. Crafting the room's secret Japanese target word unlocks the exit door to the next chamber.*
+
+<p align="center">
+  <img src="public/screenshots/04_word_crafting.svg" alt="Word Crafting Workbench" width="100%" />
+</p>
+
+---
+
+### 5. Hall of Fame Leaderboard & Run Details Inspector
+*Record your custom run name, compete for top speedrun rankings, and click any run to inspect its complete vocabulary log and stats.*
+
+<p align="center">
+  <img src="public/screenshots/05_hall_of_fame.svg" alt="Hall of Fame Leaderboard and Run Inspector" width="100%" />
+</p>
+
+---
+
 ## 🛠️ Tech Stack
 
 - **Framework**: React 19 + TypeScript
@@ -147,7 +196,9 @@ npm run lint
 
 ```
 kana-escape-room/
-├── public/                 # Static assets
+├── public/                 # Static assets & SVG media
+│   ├── favicon.svg         # Pixel-art Torii & Key application icon
+│   └── screenshots/        # High-fidelity in-game walkthrough screenshots
 ├── src/
 │   ├── components/
 │   │   ├── inventory/      # Word crafting workbench & inventory modal
