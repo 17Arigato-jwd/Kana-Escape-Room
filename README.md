@@ -1,184 +1,189 @@
-# ⛩️ Kana Escape Room (かな脱出)
+# Kana Escape Room (かな脱出)
 
-> **An open-source retro pixel-art Japanese language learning escape room game created by VCHS Studios using AI.**
+<p align="center">
+  <img src="public/Kaizen.svg" alt="Kaizen (The Japanese Club) Logo" width="180" />
+</p>
 
-🌐 **Live Game**: [https://kana-escape-room.ai.studio/](https://kana-escape-room.ai.studio/)
+<p align="center">
+  <em>An open-source, 16-bit pixel-art Japanese language learning game developed by <strong>Kaizen (The Japanese Club)</strong> using artificial intelligence.</em>
+</p>
 
-[![Play Live](https://img.shields.io/badge/Play_Live-kana--escape--room.ai.studio-emerald?style=for-the-badge&logo=googlechrome&logoColor=white)](https://kana-escape-room.ai.studio/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)]
-[![React: 19](https://img.shields.io/badge/React-19-blue.svg)]
-[![TypeScript: 5](https://img.shields.io/badge/TypeScript-5-blue.svg)]
-[![Tailwind: 4](https://img.shields.io/badge/TailwindCSS-v4-cyan.svg)]
-
----
-
-## 🎮 Overview
-
-**Kana Escape Room** is an interactive, story-driven retro 16-bit RPG escape room designed to teach Japanese Kana (Hiragana & Katakana) and practical vocabulary through engaging game mechanics.
-
-Trapped inside mysterious chambers, you explore retro workshops, ancient archives, and sacred vault gateways. By solving unique arcade trials and puzzles, you discover Kana syllables, combine them at the word-crafting workbench to forge target Japanese key words (such as **かぎ** `[kagi]` *Key*, **とびら** `[tobira]` *Door*, and **でぐち** `[deguchi]` *Exit*), unlock exit gateways, and escape!
-
----
-
-## ✨ Features
-
-- **3 Handcrafted Escape Rooms**:
-  - **Room 1: The Detective's Workshop** — Cluttered retro computing lab with electronic safes, neon arcades, and circuit switchboards (*Target: かぎ / Key*).
-  - **Room 2: The Grand Archive** — Ancient stone library with sliding book racks, pendulum chronometers, and scholar logic tables (*Target: とびら / Door*).
-  - **Room 3: The Secret Vault Gateway** — Sacred sanctuary marked by a stone Torii portal, reflex cores, and precision trials (*Target: でぐち / Exit*).
-
-- **20+ Unique Arcade Minigames & Puzzles**:
-  - *Reflex & Timing*: Timed Passcode Decryption, Pong Core Battle, Flappy Kana Glider, Lane Runner Obstacle Dodge.
-  - *Classic Retro Arcades*: Snake, 2048, Wall Breaker (Breakout), Trajectory Catapult (Slingshot), Precision Darts.
-  - *Logic & Strategy*: Sliding Tile Puzzle, Match-3 Gem Align, Tic-Tac-Toe Minimax, Dots & Boxes Grid, Sea Battle (Battleship), Rock-Paper-Scissors Duel, Memory Sequence Flashing, Card Flip Pair Matching, Mechanical Bolts Disassembly, Falling Kana Basket Catcher.
-
-- **Interactive Word Crafter & Japanese Dictionary**:
-  - Freely arrange Kana onto crafting slots to discover over 1,500+ recognized Japanese words.
-  - Full dictionary metadata display: Hiragana/Katakana script, Kanji equivalents, Romaji pronunciation, English meanings, and icon representations.
-
-- **8-Directional Pixel Character Movement**:
-  - Authentic 8-way movement animations (including 3/4 isometric diagonal views: down-left, down-right, up-left, up-right).
-  - Grounded walking cadence with weighted vertical step-bobbing.
-  - Surface-acoustic footsteps (wood parquet, stone tile, tatami straw) and tactile collision wall bumping sound effects.
-
-- **Subtle Atmospheric Pixel Ambience**:
-  - Floating dust motes drifting across light beams.
-  - Handcrafted flickering candle wall sconces and stone lanterns (*Tōrō*) with dynamic warm floor light halos.
-  - Falling cherry blossom (*Sakura*) petals and floating spirit embers.
-
-- **Generative 8-Bit Audio & Soundscapes**:
-  - Built entirely using the Web Audio API with zero external audio assets required.
-  - Generative ambient room soundscapes (computer server drones, ticking grandfather clocks, Japanese shrine wind bells).
-
-- **Named Runs Hall of Fame Leaderboard**:
-  - Name and record individual escape attempts.
-  - Local rankings sorted by fastest escape time and Kana collected.
-  - Run Inspector: Click any leaderboard entry to review its full summary, statistics, and every Japanese word created during that attempt.
+<p align="center">
+  <a href="https://kana-escape-room.ai.studio/"><img src="https://img.shields.io/badge/Live_App-kana--escape--room.ai.studio-10b981?style=flat-square" alt="Live Application" /></a>
+  <a href="https://www.gnu.org/licenses/gpl-3.0"><img src="https://img.shields.io/badge/License-GPL_v3-blue.svg?style=flat-square" alt="License: GPL v3" /></a>
+  <a href="https://react.dev/"><img src="https://img.shields.io/badge/React-19-61dafb?style=flat-square&logo=react&logoColor=black" alt="React" /></a>
+  <a href="https://www.typescriptlang.org/"><img src="https://img.shields.io/badge/TypeScript-5-3178c6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" /></a>
+  <a href="https://tailwindcss.com/"><img src="https://img.shields.io/badge/Tailwind_CSS-v4-38bdf8?style=flat-square&logo=tailwindcss&logoColor=white" alt="Tailwind CSS" /></a>
+  <a href="https://vitejs.dev/"><img src="https://img.shields.io/badge/Vite-8-646cff?style=flat-square&logo=vite&logoColor=white" alt="Vite" /></a>
+</p>
 
 ---
 
-## 🛠️ Tech Stack
+## Live Deployment
 
-- **Framework**: React 19 + TypeScript
-- **Bundler & Dev Server**: Vite 8
-- **Styling**: Tailwind CSS v4
-- **Rendering**: HTML5 2D Canvas (Pixel-art rendering with nearest-neighbor crisp scaling)
-- **Audio Engine**: Web Audio API (Synthesized procedural SFX & generative soundscapes)
-- **Visual FX**: Canvas Confetti
+The game is deployed and playable in any modern desktop or mobile web browser:
+**[https://kana-escape-room.ai.studio/](https://kana-escape-room.ai.studio/)**
 
 ---
 
-## 🚀 Installation & Running Instructions
+## Overview
+
+**Kana Escape Room** blends retro top-down dungeon exploration with interactive language pedagogy. Players awaken inside locked thematic chambers—a cybernetic detective workshop, a historic stone archive, and a sacred shrine vault. To progress, players must inspect the room, solve arcade trials to discover individual Japanese Kana tiles, and combine them at a crafting workbench to form target Japanese vocabulary words (such as **かぎ** `[kagi]` *Key*, **とびら** `[tobira]` *Door*, and **でぐち** `[deguchi]` *Exit*) to unlock subsequent areas.
+
+---
+
+## Core Features and Systems
+
+### 1. Thematic Escape Chambers
+- **Room 1: The Detective's Workshop** — A retro computing laboratory featuring electronic safes, CRT terminals, neon arcade cabinets, and circuit switchboards (*Target Word: かぎ / Key*).
+- **Room 2: The Grand Archive** — A historic stone library containing sliding bookcases, pendulum chronometers, and scholar puzzle tables (*Target Word: とびら / Door*).
+- **Room 3: The Secret Vault Gateway** — A sanctuary marked by a stone Torii portal, reflex cores, and precision trials (*Target Word: でぐち / Exit*).
+
+### 2. Arcade Stations and Minigame Trials
+Over 20 distinct minigame implementations across reflex, logic, puzzle, and timing categories:
+- **Reflex and Timing**: Timed Passcode Decryption, Pong Core Battle, Flappy Kana Glider, and Lane Runner Obstacle Dodge.
+- **Arcade Classics**: Snake, 2048 Fusion Core, Wall Breaker (Breakout), Trajectory Catapult, and Precision Darts.
+- **Logic and Strategy**: Sliding Tile Puzzle, Match-3 Gem Align, Minimax Tic-Tac-Toe, Dots & Boxes Grid, Sea Battle (Battleship), Rock-Paper-Scissors Duel, Memory Sequence Flashing, Card Flip Pair Matching, Mechanical Bolts Disassembly, and Falling Kana Basket Catcher.
+
+### 3. Word Crafting Engine and Lexicon
+- Dynamic word construction interface allowing arbitrary arrangement of collected Kana tiles.
+- Built-in dictionary containing over 1,500 validated Japanese terms.
+- Real-time lexical feedback displaying Kana script, Kanji equivalents, Romaji phonetics, and English definitions.
+
+### 4. Movement and Locomotion Architecture
+- Full 8-directional locomotion including dedicated 3/4 isometric diagonal walk animations (`down-left`, `down-right`, `up-left`, `up-right`).
+- Weighted step-bob physics with synchronized vertical displacement on contact frames.
+- Surface-acoustic footstep audio mapped to room floor types (parquet wood, stone flagstone, and tatami straw).
+- Tactile collision detection and bump audio feedback against solid boundaries.
+
+### 5. Generative Web Audio Engine
+- Built entirely with the browser Web Audio API with zero external audio asset dependencies.
+- Generative procedural ambient soundscapes tailored to each room (server room drone, pendulum clock rhythm, Japanese shrine wind chimes).
+- Synthesized 8-bit sound effects for selection, interaction, minigame victory, word crafting, and collisions.
+
+### 6. Hall of Fame Leaderboard and Run Inspector
+- Persistent local storage recording named escape runs, clear times, and collected Kana counts.
+- Run Inspector interface enabling full retrospective review of clear statistics and every word formed during an expedition.
+
+---
+
+## Technology Stack
+
+| Component | Technology | Description |
+| :--- | :--- | :--- |
+| **Frontend Framework** | React 19 | Component hierarchy, state management, and modal overlays |
+| **Language** | TypeScript 5 | Strict typing across game loops, entities, and dictionaries |
+| **Build Tooling** | Vite 8 | Fast HMR dev server and optimized production bundling |
+| **Styling** | Tailwind CSS v4 | Responsive layout utilities and custom theme palette |
+| **Game Rendering** | HTML5 2D Canvas | Nearest-neighbor pixel-art scaling and custom frame rendering |
+| **Audio Synthesis** | Web Audio API | Procedural sound generation without external audio files |
+| **Visual Effects** | Canvas Confetti | Celebration particle effects on room clear |
+
+---
+
+## Getting Started
 
 ### Prerequisites
 
-Make sure you have [Node.js](https://nodejs.org/) installed:
-- **Node.js**: v18.0.0 or higher (v20+ recommended)
-- **npm**: v9.0.0 or higher (comes with Node.js)
+Ensure the following runtimes are installed on your system:
+- **Node.js**: `v18.0.0` or higher (`v20.x` LTS recommended)
+- **npm**: `v9.0.0` or higher
 
-### 1. Clone the Repository
+### Installation
 
-```bash
-git clone https://github.com/17arigato-jwd/kana-escape-room.git
-cd kana-escape-room
-```
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/17arigato-jwd/kana-escape-room.git
+   cd kana-escape-room
+   ```
 
-### 2. Install Dependencies
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-Install all required npm packages:
+3. Launch the development server:
+   ```bash
+   npm run dev
+   ```
 
-```bash
-npm install
-```
-
-### 3. Run the Development Server
-
-Start the local Vite dev server:
-
-```bash
-npm run dev
-```
-
-Open your browser and navigate to:
-```
-http://localhost:3000
-```
-
-### 4. Build for Production
-
-To create an optimized production build:
-
-```bash
-npm run build
-```
-
-The compiled assets will be placed in the `dist/` directory.
-
-### 5. Preview Production Build
-
-To test the production build locally:
-
-```bash
-npm run preview
-```
-
-### 6. Lint & Type Check
-
-To verify TypeScript types across the codebase:
-
-```bash
-npm run lint
-```
+4. Open your browser and navigate to:
+   ```
+   http://localhost:3000
+   ```
 
 ---
 
-## 🕹️ Controls & Keybindings
+## Build and Scripts
 
-| Key / Action | Function |
+| Command | Description |
+| :--- | :--- |
+| `npm run dev` | Starts the Vite development server on port 3000 |
+| `npm run build` | Compiles TypeScript and creates an optimized production build in `dist/` |
+| `npm run preview` | Runs a local static server to preview the production build |
+| `npm run lint` | Runs TypeScript compilation verification (`tsc --noEmit`) |
+| `npm run clean` | Cleans previous build artifacts |
+
+---
+
+## Controls and Input
+
+| Input | Action |
 | :--- | :--- |
 | <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> or <kbd>Arrow Keys</kbd> | Move character in 8 directions (supports diagonal movement) |
-| <kbd>E</kbd> | Interact with stations, consoles, puzzles, and doors |
-| <kbd>I</kbd> | Open Kana Inventory & Word Crafting Workbench |
-| <kbd>ESC</kbd> | Pause Menu / Volume Controls / Close modals |
+| <kbd>E</kbd> | Interact with objects, consoles, stations, and exit doors |
+| <kbd>I</kbd> | Open Kana Inventory and Word Crafting Workbench |
+| <kbd>ESC</kbd> | Pause Menu, volume controls, or dismiss open dialogs |
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 kana-escape-room/
-├── public/                 # Static assets & favicon
-│   └── favicon.svg         # Pixel-art Torii & Key application icon
+├── public/                 # Static assets, branding, and icons
+│   ├── Dark Mode.svg       # Kaizen (The Japanese Club) official logo
+│   └── favicon.svg         # SVG application icon
 ├── src/
 │   ├── components/
-│   │   ├── inventory/      # Word crafting workbench & inventory modal
-│   │   ├── minigames/      # 20+ retro arcade & puzzle trial minigames
-│   │   └── ui/             # Title screen, leaderboard, HUD, run details modal
+│   │   ├── inventory/      # Word crafting workbench and inventory modal
+│   │   ├── minigames/      # Arcade trials and puzzle minigames
+│   │   └── ui/             # Title screen, HUD, leaderboard, and run inspector
 │   ├── data/
-│   │   ├── characters.ts   # Playable explorers & palettes
-│   │   ├── dictionary.ts   # 1,500+ Japanese vocabulary dictionary
-│   │   └── rooms.ts        # Room definitions, puzzle layouts & decor
+│   │   ├── characters.ts   # Player character palettes and metadata
+│   │   ├── dictionary.ts   # Japanese vocabulary lexicon (1,500+ entries)
+│   │   └── rooms.ts        # Room definitions, collision maps, and station layouts
 │   ├── game/
-│   │   ├── AtmosphericEffects.ts # Dust motes, sakura petals, candle flicker system
-│   │   └── GameViewport.tsx      # Canvas game loop, movement & collision system
+│   │   ├── AtmosphericEffects.ts # Particle systems (dust motes, petals, lights)
+│   │   └── GameViewport.tsx      # Canvas game loop, movement physics, and collision
 │   ├── types/
-│   │   └── game.ts         # TypeScript definitions
+│   │   └── game.ts         # TypeScript interfaces and enum types
 │   ├── utils/
-│   │   ├── audio.ts        # Procedural Web Audio API sound generator
-│   │   ├── leaderboard.ts  # Run persistence & ranking algorithms
-│   │   └── pixelArt.ts     # Procedural pixel-art sprites & tilesets
-│   ├── App.tsx             # Main game state controller
-│   └── main.tsx            # Application entry point
-├── package.json
-├── tsconfig.json
-├── vite.config.ts
-└── README.md
+│   │   ├── audio.ts        # Synthesized sound effects and generative soundscapes
+│   │   ├── leaderboard.ts  # Local run persistence and sorting algorithms
+│   │   └── pixelArt.ts     # Procedural pixel-art canvas sprite generators
+│   ├── App.tsx             # Main game controller and state orchestrator
+│   └── main.tsx            # React application entry point
+├── package.json            # Dependencies and npm scripts
+├── tsconfig.json           # TypeScript configuration
+├── vite.config.ts          # Vite configuration
+└── README.md               # Project documentation
 ```
 
 ---
 
-## 📜 Credits & License
+## Contributing
 
-- **Developer**: Created by **VCHS Studios** using AI.
-- **License**: Released as an open-source project under the [MIT License](LICENSE).
-- **Contributions**: Contributions, bug reports, and suggestions are welcome via GitHub pull requests and issues.
+Contributions, bug reports, and feature proposals are welcome:
+1. Fork the repository.
+2. Create a feature branch (`git checkout -b feature/improvement`).
+3. Commit your changes (`git commit -m 'Add new puzzle station'`).
+4. Push to the branch (`git push origin feature/improvement`).
+5. Open a Pull Request.
+
+---
+
+## License and Attribution
+
+- **Organization**: Developed by **Kaizen (The Japanese Club)** using artificial intelligence.
+- **License**: Released under the [GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0) (GNU GPLv3).
