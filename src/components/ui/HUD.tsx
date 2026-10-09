@@ -9,9 +9,7 @@ interface HUDProps {
   isDoorUnlocked: boolean;
   onOpenInventory: () => void;
   onOpenPauseMenu: () => void;
-  onUnlockDoor?: () => void;
-  onSelectRoomIndex?: (index: number) => void;
-  currentRoomIndex?: number;
+  onOpenDoorClue?: () => void;
 }
 
 export const HUD: React.FC<HUDProps> = ({
@@ -20,9 +18,7 @@ export const HUD: React.FC<HUDProps> = ({
   isDoorUnlocked,
   onOpenInventory,
   onOpenPauseMenu,
-  onUnlockDoor,
-  onSelectRoomIndex,
-  currentRoomIndex = 0,
+  onOpenDoorClue,
 }) => {
   const theme = getRoomTheme(currentRoom.id);
 
@@ -40,8 +36,15 @@ export const HUD: React.FC<HUDProps> = ({
           </span>
         </div>
 
-        {/* Clue Badge */}
-        <div className="flex items-center gap-1 sm:gap-1.5 bg-slate-950/90 px-1.5 sm:px-2.5 py-1 border border-amber-500/60 shadow-sm">
+        {/* Clue Badge & Hints trigger */}
+        <button
+          onClick={() => {
+            sounds.playSelect();
+            onOpenDoorClue?.();
+          }}
+          title="Inspect Door Clue & Kana Cipher Hints"
+          className="flex items-center gap-1 sm:gap-1.5 bg-slate-950/90 px-1.5 sm:px-2.5 py-1 border border-amber-500/60 shadow-sm hover:border-yellow-400 hover:bg-slate-900 cursor-pointer transition-all active:scale-95"
+        >
           <span className="text-[9px] sm:text-[10px] text-amber-300 hidden xs:inline font-pixel">
             CLUE:
           </span>
@@ -51,55 +54,12 @@ export const HUD: React.FC<HUDProps> = ({
               [UNLOCKED ✓]
             </span>
           ) : (
-            <span className="text-[8px] text-amber-400/80 font-mono hidden sm:inline">
-              [LOCKED]
+            <span className="text-[8px] text-amber-300/90 font-pixel ml-0.5 flex items-center gap-0.5">
+              <span>💡</span>
+              <span className="hidden sm:inline">HINTS</span>
             </span>
           )}
-        </div>
-      </div>
-
-      {/* Temporary Test Navigation Controls */}
-      <div className="flex items-center gap-1 sm:gap-1.5 bg-slate-950/90 px-1.5 sm:px-2 py-0.5 sm:py-1 border border-amber-500/60 shadow-inner">
-        <button
-          onClick={() => {
-            sounds.playSuccess();
-            onUnlockDoor?.();
-          }}
-          disabled={isDoorUnlocked}
-          title="Temporary test control: Unlock this room's exit door immediately"
-          className={`px-2 py-1 text-[8px] sm:text-[9px] font-pixel border rounded-xs cursor-pointer flex items-center gap-1 transition-all ${
-            isDoorUnlocked
-              ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500 cursor-default'
-              : 'bg-amber-600 hover:bg-amber-500 text-yellow-100 border-yellow-300 active:scale-95 animate-pulse'
-          }`}
-        >
-          <span>{isDoorUnlocked ? '✓' : '🔓'}</span>
-          <span className="hidden xs:inline">{isDoorUnlocked ? 'DOOR OPEN' : 'UNLOCK DOOR (TEST)'}</span>
-          <span className="xs:hidden">{isDoorUnlocked ? 'OPEN' : 'UNLOCK'}</span>
         </button>
-
-        {onSelectRoomIndex && (
-          <div className="flex items-center gap-0.5 pl-1 border-l border-slate-700">
-            <span className="text-[7px] sm:text-[8px] text-slate-400 font-pixel mr-0.5 hidden sm:inline">WARP:</span>
-            {[0, 1, 2].map((idx) => (
-              <button
-                key={idx}
-                onClick={() => {
-                  sounds.playSelect();
-                  onSelectRoomIndex(idx);
-                }}
-                title={`Warp to Room ${idx + 1}`}
-                className={`px-1.5 py-0.5 text-[8px] sm:text-[9px] font-pixel border cursor-pointer active:scale-95 ${
-                  currentRoomIndex === idx
-                    ? 'bg-indigo-600 text-yellow-300 border-yellow-400 font-bold'
-                    : 'bg-slate-900 text-slate-400 hover:text-white border-slate-700'
-                }`}
-              >
-                R{idx + 1}
-              </button>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Buttons */}

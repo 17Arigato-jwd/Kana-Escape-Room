@@ -17,7 +17,7 @@ export const ROOMS: RoomData[] = [
     targetWord: 'かぎ',
     targetMeaning: 'Key',
     targetIcon: '🔑',
-    clueHint: 'A steel security shutter sealed with a key mechanism. It requires the Japanese word for "Key" (かぎ).',
+    clueHint: 'A steel security shutter sealed with a key mechanism. It requires the Japanese word for "Key".',
     requiredKana: ['か', 'ぎ'],
     playerSpawn: { x: 11, y: 11 },
     exitDoor: {
@@ -28,7 +28,7 @@ export const ROOMS: RoomData[] = [
       targetWord: 'かぎ',
       targetMeaning: 'Key',
       targetIcon: '🔑',
-      clueHint: 'Engraved with a golden key symbol 🔑. It will not budge until you craft the word "かぎ".'
+      clueHint: 'Engraved with a golden key symbol 🔑. It will not budge until the seal is dissolved.'
     },
     interactables: [
       {
@@ -137,7 +137,7 @@ export const ROOMS: RoomData[] = [
     targetWord: 'とびら',
     targetMeaning: 'Door',
     targetIcon: '🚪',
-    clueHint: 'An ornate Shoji sliding portal barred by a heavy wooden beam. It requires the Japanese word for "Door" (とびら).',
+    clueHint: 'An ornate Shoji sliding portal barred by a heavy wooden beam. It requires the Japanese word for "Door".',
     requiredKana: ['と', 'び', 'ら'],
     playerSpawn: { x: 12, y: 14 },
     exitDoor: {
@@ -148,7 +148,7 @@ export const ROOMS: RoomData[] = [
       targetWord: 'とびら',
       targetMeaning: 'Door',
       targetIcon: '🚪',
-      clueHint: 'Carved with an ornate Shoji gateway symbol 🚪. Unlocked by forming the word "とびら".'
+      clueHint: 'Carved with an ornate Shoji gateway symbol 🚪. It will not budge until the seal is dissolved.'
     },
     interactables: [
       {
@@ -270,7 +270,7 @@ export const ROOMS: RoomData[] = [
     targetWord: 'でぐち',
     targetMeaning: 'Exit',
     targetIcon: '🚪',
-    clueHint: 'A majestic sealed Vermillion Torii archway draped in sacred Shimenawa rope. Craft the Japanese word for "Exit" (でぐち) to escape!',
+    clueHint: 'A majestic sealed Vermillion Torii archway draped in sacred Shimenawa rope. Craft the Japanese word for "Exit" to escape!',
     requiredKana: ['で', 'ぐ', 'ち'],
     playerSpawn: { x: 13, y: 16 },
     exitDoor: {

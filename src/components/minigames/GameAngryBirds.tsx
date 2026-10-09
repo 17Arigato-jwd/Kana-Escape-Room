@@ -6,6 +6,68 @@ interface GameAngryBirdsProps {
   onFailure?: () => void;
 }
 
+interface Block {
+  id: string;
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  color: string;
+  border: string;
+  type: 'stone' | 'wood';
+  alive: boolean;
+  falling: boolean;
+  vy: number;
+  supports?: string[];
+}
+
+interface Target {
+  id: string;
+  x: number;
+  y: number;
+  r: number;
+  alive: boolean;
+  falling: boolean;
+  vy: number;
+  supportedBy?: string;
+}
+
+interface Particle {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number;
+  maxLife: number;
+  color: string;
+  size: number;
+}
+
+const initBlocks = (): Block[] => [
+  // Tier 1: Foundation Stone Pillars
+  { id: 'p1', x: 172, y: 135, w: 10, h: 40, color: '#64748b', border: '#475569', type: 'stone', alive: true, falling: false, vy: 0 },
+  { id: 'p2', x: 204, y: 135, w: 10, h: 40, color: '#64748b', border: '#475569', type: 'stone', alive: true, falling: false, vy: 0 },
+  { id: 'p3', x: 236, y: 135, w: 10, h: 40, color: '#64748b', border: '#475569', type: 'stone', alive: true, falling: false, vy: 0 },
+  // Tier 1 Roof / Tier 2 Floor Beam
+  { id: 'b1', x: 168, y: 128, w: 82, h: 7, color: '#b45309', border: '#78350f', type: 'wood', alive: true, falling: false, vy: 0, supports: ['p1', 'p2', 'p3'] },
+  // Tier 2: Mid Columns
+  { id: 'p4', x: 184, y: 92, w: 10, h: 36, color: '#b45309', border: '#78350f', type: 'wood', alive: true, falling: false, vy: 0, supports: ['b1'] },
+  { id: 'p5', x: 224, y: 92, w: 10, h: 36, color: '#b45309', border: '#78350f', type: 'wood', alive: true, falling: false, vy: 0, supports: ['b1'] },
+  // Tier 2 Roof Beam
+  { id: 'b2', x: 178, y: 85, w: 62, h: 7, color: '#dc2626', border: '#991b1b', type: 'wood', alive: true, falling: false, vy: 0, supports: ['p4', 'p5'] },
+  // Tier 3 Pagoda Crown Peak
+  { id: 'b3', x: 196, y: 56, w: 26, h: 6, color: '#f59e0b', border: '#b45309', type: 'wood', alive: true, falling: false, vy: 0, supports: ['b2'] },
+];
+
+const initTargets = (): Target[] => [
+  // Ground Sanctuary (vaulted between p1 & p2)
+  { id: 't1', x: 191, y: 160, r: 7, alive: true, falling: false, vy: 0 },
+  // Mid Shrine (resting on beam b1)
+  { id: 't2', x: 209, y: 118, r: 7, alive: true, falling: false, vy: 0, supportedBy: 'b1' },
+  // Celestial Crown (atop upper roof b2)
+  { id: 't3', x: 209, y: 76, r: 7, alive: true, falling: false, vy: 0, supportedBy: 'b2' },
+];
+
 export const GameAngryBirds: React.FC<GameAngryBirdsProps> = ({ onSuccess }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [shotsLeft, setShotsLeft] = useState(3);
@@ -16,40 +78,54 @@ export const GameAngryBirds: React.FC<GameAngryBirdsProps> = ({ onSuccess }) => 
   const onSuccessRef = useRef(onSuccess);
   onSuccessRef.current = onSuccess;
 
+  const particlesRef = useRef<Particle[]>([]);
+
   const stateRef = useRef({
-    slingX: 50,
+    slingX: 45,
     slingY: 135,
     dragging: false,
-    dragX: 50,
+    dragX: 45,
     dragY: 135,
-    projectile: { x: 50, y: 135, vx: 0, vy: 0, active: false },
-    targets: [
-      { x: 190, y: 140, w: 16, h: 20, alive: true },
-      { x: 215, y: 120, w: 16, h: 40, alive: true },
-      { x: 240, y: 130, w: 16, h: 30, alive: true },
-    ],
+    projectile: { x: 45, y: 135, vx: 0, vy: 0, active: false },
+    blocks: initBlocks(),
+    targets: initTargets(),
     shots: 3,
     won: false,
     gameOver: false,
   });
 
+  const spawnParticles = (x: number, y: number, color: string, count = 12, speed = 3.5) => {
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const spd = (Math.random() * 0.8 + 0.2) * speed;
+      particlesRef.current.push({
+        x,
+        y,
+        vx: Math.cos(angle) * spd,
+        vy: Math.sin(angle) * spd,
+        life: 0,
+        maxLife: 16 + Math.random() * 10,
+        color,
+        size: Math.random() * 2.5 + 1.5,
+      });
+    }
+  };
+
   const restart = () => {
     stateRef.current = {
-      slingX: 50,
+      slingX: 45,
       slingY: 135,
       dragging: false,
-      dragX: 50,
+      dragX: 45,
       dragY: 135,
-      projectile: { x: 50, y: 135, vx: 0, vy: 0, active: false },
-      targets: [
-        { x: 190, y: 140, w: 16, h: 20, alive: true },
-        { x: 215, y: 120, w: 16, h: 40, alive: true },
-        { x: 240, y: 130, w: 16, h: 30, alive: true },
-      ],
+      projectile: { x: 45, y: 135, vx: 0, vy: 0, active: false },
+      blocks: initBlocks(),
+      targets: initTargets(),
       shots: 3,
       won: false,
       gameOver: false,
     };
+    particlesRef.current = [];
     setShotsLeft(3);
     setTargetsLeft(3);
     setWon(false);
@@ -71,6 +147,61 @@ export const GameAngryBirds: React.FC<GameAngryBirdsProps> = ({ onSuccess }) => 
       const s = stateRef.current;
       const p = s.projectile;
 
+      // Update structural physics (falling blocks & targets)
+      for (const b of s.blocks) {
+        if (b.alive && b.supports) {
+          // If all supporting pillars are destroyed, the beam falls!
+          const activeSupports = b.supports.filter((id) =>
+            s.blocks.some((x) => x.id === id && x.alive)
+          );
+          if (activeSupports.length === 0) {
+            b.falling = true;
+          }
+        }
+        if (b.alive && b.falling) {
+          b.vy += 0.20;
+          b.y += b.vy;
+          if (b.y >= 175 - b.h) {
+            b.y = 175 - b.h;
+            b.vy = 0;
+          }
+
+          // Falling beam crushes targets below it!
+          for (const t of s.targets) {
+            if (
+              t.alive &&
+              b.x <= t.x + t.r &&
+              b.x + b.w >= t.x - t.r &&
+              b.y + b.h >= t.y - t.r &&
+              b.y <= t.y + t.r
+            ) {
+              t.alive = false;
+              spawnParticles(t.x, t.y, '#facc15', 16, 4.0);
+              sounds.playKanaObtained();
+            }
+          }
+        }
+      }
+
+      // Update supported targets falling if their base falls
+      for (const t of s.targets) {
+        if (t.alive && t.supportedBy) {
+          const sup = s.blocks.find((x) => x.id === t.supportedBy);
+          if (sup && (!sup.alive || sup.falling)) {
+            t.falling = true;
+            t.vy = Math.max(t.vy, sup.vy || 1.2);
+          }
+        }
+        if (t.alive && t.falling) {
+          t.vy += 0.20;
+          t.y += t.vy;
+          if (t.y >= 175 - t.r) {
+            t.y = 175 - t.r;
+            t.vy = 0;
+          }
+        }
+      }
+
       // Update projectile physics
       if (p.active) {
         p.vy += gravity;
@@ -80,18 +211,35 @@ export const GameAngryBirds: React.FC<GameAngryBirdsProps> = ({ onSuccess }) => 
         // Check target collision
         for (const t of s.targets) {
           if (t.alive) {
-            if (p.x >= t.x && p.x <= t.x + t.w && p.y >= t.y && p.y <= t.y + t.h) {
+            if (Math.hypot(p.x - t.x, p.y - t.y) <= 6 + t.r) {
               t.alive = false;
+              spawnParticles(t.x, t.y, '#facc15', 20, 4.5);
               sounds.playKanaObtained();
-              const remaining = s.targets.filter((x) => x.alive).length;
-              setTargetsLeft(remaining);
+              p.vx *= 0.65;
+            }
+          }
+        }
 
-              if (remaining === 0) {
-                s.won = true;
-                setWon(true);
-                sounds.playSuccess();
-                setTimeout(() => onSuccessRef.current(), 750);
-              }
+        // Check block collision
+        for (const b of s.blocks) {
+          if (b.alive) {
+            if (
+              p.x >= b.x - 3 &&
+              p.x <= b.x + b.w + 3 &&
+              p.y >= b.y - 3 &&
+              p.y <= b.y + b.h + 3
+            ) {
+              b.alive = false;
+              spawnParticles(
+                b.x + b.w / 2,
+                b.y + b.h / 2,
+                b.type === 'stone' ? '#94a3b8' : '#b45309',
+                14,
+                3.5
+              );
+              sounds.playBlip(340);
+              p.vx *= 0.55;
+              p.vy = (p.vy + 0.8) * 0.45;
             }
           }
         }
@@ -103,60 +251,126 @@ export const GameAngryBirds: React.FC<GameAngryBirdsProps> = ({ onSuccess }) => 
           p.y = s.slingY;
           s.shots -= 1;
           setShotsLeft(s.shots);
+        }
+      }
 
-          const remaining = s.targets.filter((x) => x.alive).length;
-          if (remaining > 0 && s.shots <= 0) {
-            s.gameOver = true;
-            setGameOver(true);
-            sounds.playFail();
-          }
+      // Continuous Win & Game Over evaluation:
+      // Checks every frame so collapsing structural blocks trigger instant victory when the final target is crushed!
+      const remaining = s.targets.filter((x) => x.alive).length;
+      setTargetsLeft(remaining);
+
+      if (remaining === 0 && !s.won) {
+        s.won = true;
+        setWon(true);
+        sounds.playSuccess();
+        setTimeout(() => onSuccessRef.current(), 750);
+      } else if (!s.won && !s.gameOver && !p.active && s.shots <= 0) {
+        // Only trigger Game Over if projectile is inactive and no blocks/targets are currently in motion
+        const isPhysicsActive =
+          s.blocks.some((b) => b.alive && b.falling && b.vy > 0) ||
+          s.targets.some((t) => t.alive && t.falling && t.vy > 0);
+        if (!isPhysicsActive && remaining > 0) {
+          s.gameOver = true;
+          setGameOver(true);
+          sounds.playFail();
         }
       }
 
       // Render
-      ctx.fillStyle = '#1e1b4b'; // Night landscape
+      ctx.fillStyle = '#0f172a'; // Deep twilight pagoda sky
       ctx.fillRect(0, 0, 260, 200);
+
+      // Background stars
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+      ctx.fillRect(30, 25, 1.5, 1.5);
+      ctx.fillRect(90, 40, 1.5, 1.5);
+      ctx.fillRect(150, 18, 1.5, 1.5);
+      ctx.fillRect(230, 30, 1.5, 1.5);
 
       // Ground
       ctx.fillStyle = '#334155';
       ctx.fillRect(0, 175, 260, 25);
       ctx.fillStyle = '#22c55e';
-      ctx.fillRect(0, 175, 260, 2);
+      ctx.fillRect(0, 175, 260, 2.5);
 
       // Slingshot frame
       ctx.fillStyle = '#78350f';
-      ctx.fillRect(48, 140, 6, 35);
-      ctx.fillRect(40, 130, 8, 12);
-      ctx.fillRect(54, 130, 8, 12);
+      ctx.fillRect(43, 140, 6, 35);
+      ctx.fillRect(35, 130, 8, 12);
+      ctx.fillRect(49, 130, 8, 12);
 
       // Slingshot elastic band
       if (s.dragging) {
         ctx.strokeStyle = '#f59e0b';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(42, 132);
+        ctx.moveTo(37, 132);
         ctx.lineTo(s.dragX, s.dragY);
-        ctx.lineTo(58, 132);
+        ctx.lineTo(53, 132);
         ctx.stroke();
 
-        // Trajectory preview dots
+        // High accuracy curved trajectory preview dots
         const pVx = (s.slingX - s.dragX) * 0.18;
         const pVy = (s.slingY - s.dragY) * 0.18;
-        ctx.fillStyle = 'rgba(254, 240, 138, 0.6)';
-        for (let i = 1; i <= 6; i++) {
-          const predX = s.slingX + pVx * i * 3;
-          const predY = s.slingY + pVy * i * 3 + 0.5 * gravity * Math.pow(i * 3, 2);
-          ctx.fillRect(predX, predY, 2, 2);
+        ctx.fillStyle = 'rgba(254, 240, 138, 0.7)';
+        for (let i = 1; i <= 14; i++) {
+          const t = i * 2.2;
+          const predX = s.slingX + pVx * t;
+          const predY = s.slingY + pVy * t + 0.5 * gravity * Math.pow(t, 2);
+          if (predX > 260 || predY > 175) break;
+          ctx.beginPath();
+          ctx.arc(predX, predY, 1.5, 0, Math.PI * 2);
+          ctx.fill();
         }
       }
 
-      // Fortress Targets
+      // Draw Fortress Blocks
+      for (const b of s.blocks) {
+        if (b.alive) {
+          ctx.fillStyle = b.color;
+          ctx.fillRect(b.x, b.y, b.w, b.h);
+          ctx.strokeStyle = b.border;
+          ctx.lineWidth = 1;
+          ctx.strokeRect(b.x, b.y, b.w, b.h);
+          // Highlight edge
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
+          ctx.fillRect(b.x + 1, b.y + 1, b.w - 2, 1.5);
+        }
+      }
+
+      // Draw Targets (Golden Spirit Orbs)
       for (const t of s.targets) {
         if (t.alive) {
-          ctx.fillStyle = '#b45309'; // Wood block
-          ctx.fillRect(t.x, t.y, t.w, t.h);
-          ctx.fillStyle = '#ef4444'; // Red target gem
-          ctx.fillRect(t.x + 3, t.y + 4, t.w - 6, t.h - 8);
+          ctx.fillStyle = '#f59e0b'; // Gold rim
+          ctx.beginPath();
+          ctx.arc(t.x, t.y, t.r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#fef08a'; // Radiant center
+          ctx.beginPath();
+          ctx.arc(t.x, t.y, t.r - 2, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#ef4444'; // Red core seal
+          ctx.beginPath();
+          ctx.arc(t.x, t.y, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      // Draw Particles
+      for (let i = particlesRef.current.length - 1; i >= 0; i--) {
+        const pt = particlesRef.current[i];
+        pt.x += pt.vx;
+        pt.y += pt.vy;
+        pt.life += 1;
+
+        const alpha = Math.max(0, 1 - pt.life / pt.maxLife);
+        ctx.fillStyle = pt.color;
+        ctx.globalAlpha = alpha;
+        ctx.fillRect(pt.x, pt.y, pt.size, pt.size);
+        ctx.globalAlpha = 1.0;
+
+        if (pt.life >= pt.maxLife) {
+          particlesRef.current.splice(i, 1);
         }
       }
 
@@ -167,8 +381,16 @@ export const GameAngryBirds: React.FC<GameAngryBirdsProps> = ({ onSuccess }) => 
       ctx.beginPath();
       ctx.arc(px, py, 6, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = '#fef08a';
-      ctx.fillRect(px + 1, py - 2, 3, 3); // beak
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(px + 2, py - 2, 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#000000';
+      ctx.beginPath();
+      ctx.arc(px + 2.5, py - 2, 1, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fef08a'; // Beak
+      ctx.fillRect(px + 4, py - 1, 3, 3);
 
       animId = requestAnimationFrame(loop);
     };
@@ -202,13 +424,13 @@ export const GameAngryBirds: React.FC<GameAngryBirdsProps> = ({ onSuccess }) => 
   };
 
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (stateRef.current.projectile.active || won || gameOver) return;
+    if (stateRef.current.projectile.active || stateRef.current.shots <= 0 || won || gameOver) return;
     stateRef.current.dragging = true;
     updateDragFromCoords(e.clientX, e.clientY);
   };
 
   const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
-    if (stateRef.current.projectile.active || won || gameOver) return;
+    if (stateRef.current.projectile.active || stateRef.current.shots <= 0 || won || gameOver) return;
     const touch = e.touches[0];
     if (!touch) return;
     stateRef.current.dragging = true;
@@ -269,7 +491,7 @@ export const GameAngryBirds: React.FC<GameAngryBirdsProps> = ({ onSuccess }) => 
     <div className="flex flex-col items-center select-none font-pixel w-full max-w-[580px]">
       <div className="flex justify-between items-center w-full mb-2 text-xs sm:text-sm px-1">
         <span className="text-cyan-400 font-bold">AMMO: {'🔴'.repeat(shotsLeft)}</span>
-        <span className="text-rose-400 font-bold">TARGETS: {targetsLeft}</span>
+        <span className="text-amber-300 font-bold">TARGETS: {targetsLeft}/3</span>
       </div>
 
       <div className="relative border-4 border-slate-700 shadow-2xl bg-black cursor-crosshair touch-none w-full flex justify-center overflow-hidden">
@@ -284,8 +506,8 @@ export const GameAngryBirds: React.FC<GameAngryBirdsProps> = ({ onSuccess }) => 
 
         {won && (
           <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center border-2 border-emerald-400 p-4 animate-in fade-in">
-            <span className="text-emerald-400 text-sm sm:text-base mb-1 font-bold">★ FORTRESS TOPPLED! ★</span>
-            <span className="text-xs text-slate-300 mb-3">All target blocks obliterated!</span>
+            <span className="text-emerald-400 text-sm sm:text-base mb-1 font-bold">★ PAGODA FORTRESS TOPPLED! ★</span>
+            <span className="text-xs text-slate-300 mb-3">All 3 sacred target crests destroyed!</span>
             <button
               onClick={() => onSuccessRef.current()}
               className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black text-xs sm:text-sm font-bold border-2 border-white cursor-pointer active:translate-y-0.5 shadow-lg"
@@ -309,7 +531,7 @@ export const GameAngryBirds: React.FC<GameAngryBirdsProps> = ({ onSuccess }) => 
       </div>
 
       <p className="text-[10px] sm:text-xs text-slate-400 mt-2 text-center">
-        Click and drag back the slingshot to aim trajectory, release to fire!
+        Pull slingshot to aim • Shatter foundation pillars to trigger cascading structural collapse!
       </p>
     </div>
   );
