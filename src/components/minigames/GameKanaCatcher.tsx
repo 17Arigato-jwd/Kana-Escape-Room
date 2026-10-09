@@ -184,22 +184,43 @@ export const GameKanaCatcher: React.FC<GameKanaCatcherProps> = ({ onSuccess, tar
   }, []);
 
   return (
-    <div className="flex flex-col items-center select-none font-pixel w-full max-w-xs">
-      <div className="flex justify-between items-center w-full mb-2 text-xs">
-        <span className="text-emerald-400">SPIRITS: {caught}/{targetCount}</span>
-        <span className="text-rose-400 text-[10px] font-mono">0 MISSES ALLOWED</span>
+    <div className="flex flex-col items-center select-none font-pixel w-full max-w-[580px]">
+      <div className="flex justify-between items-center w-full mb-2 text-xs sm:text-sm px-1">
+        <span className="text-emerald-400 font-bold">SPIRITS: {caught}/{targetCount}</span>
+        <span className="text-rose-400 text-[10px] sm:text-xs font-mono">0 MISSES ALLOWED</span>
       </div>
 
-      <div className="relative border-4 border-slate-700 shadow-2xl bg-black">
-        <canvas ref={canvasRef} width={260} height={200} className="pixelated block" />
+      <div className="relative border-4 border-slate-700 shadow-2xl bg-black touch-none w-full flex justify-center overflow-hidden">
+        <canvas
+          ref={canvasRef}
+          width={260}
+          height={200}
+          className="pixelated block touch-none cursor-pointer w-full max-w-[560px] aspect-[260/200] object-contain"
+          onTouchStart={(e) => {
+            if (e.touches[0] && canvasRef.current) {
+              const rect = canvasRef.current.getBoundingClientRect();
+              const scaleX = canvasRef.current.width / rect.width;
+              const x = (e.touches[0].clientX - rect.left) * scaleX;
+              stateRef.current.basketX = Math.max(10, Math.min(205, x - 22));
+            }
+          }}
+          onTouchMove={(e) => {
+            if (e.touches[0] && canvasRef.current) {
+              const rect = canvasRef.current.getBoundingClientRect();
+              const scaleX = canvasRef.current.width / rect.width;
+              const x = (e.touches[0].clientX - rect.left) * scaleX;
+              stateRef.current.basketX = Math.max(10, Math.min(205, x - 22));
+            }
+          }}
+        />
 
         {won && (
           <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center border-2 border-emerald-400 p-4 animate-in fade-in">
-            <span className="text-emerald-400 text-sm mb-1 font-bold">★ 15 SPIRITS CONSECRATED! ★</span>
-            <span className="text-[10px] text-slate-300 mb-3">Flawless sacred basin collection!</span>
+            <span className="text-emerald-400 text-sm sm:text-base mb-1 font-bold">★ 15 SPIRITS CONSECRATED! ★</span>
+            <span className="text-xs text-slate-300 mb-3">Flawless sacred basin collection!</span>
             <button
               onClick={() => onSuccessRef.current()}
-              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold border-2 border-white cursor-pointer shadow-lg"
+              className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black text-xs sm:text-sm font-bold border-2 border-white cursor-pointer active:translate-y-0.5 shadow-lg"
             >
               CLAIM REWARD NOW
             </button>
@@ -208,11 +229,11 @@ export const GameKanaCatcher: React.FC<GameKanaCatcherProps> = ({ onSuccess, tar
 
         {gameOver && !won && (
           <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center border-2 border-red-500 p-4">
-            <span className="text-red-400 text-xs mb-1 font-bold">SPIRIT TOUCHED GROUND!</span>
-            <span className="text-[9px] text-slate-300 mb-3">Catch all 15 spirits without dropping one.</span>
+            <span className="text-red-400 text-sm sm:text-base mb-1 font-bold">SPIRIT TOUCHED GROUND!</span>
+            <span className="text-[10px] text-slate-300 mb-3">Catch all 15 spirits without dropping one.</span>
             <button
               onClick={restart}
-              className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white text-[10px] border-2 border-white cursor-pointer"
+              className="px-5 py-2 bg-red-600 hover:bg-red-500 text-white text-xs border-2 border-white cursor-pointer active:translate-y-0.5"
             >
               TRY AGAIN
             </button>
@@ -223,18 +244,18 @@ export const GameKanaCatcher: React.FC<GameKanaCatcherProps> = ({ onSuccess, tar
       <div className="flex gap-4 mt-3 w-full justify-center">
         <button
           onClick={() => { stateRef.current.basketX = Math.max(10, stateRef.current.basketX - 25); }}
-          className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border-2 border-slate-600 text-xs cursor-pointer active:bg-slate-600"
+          className="px-7 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border-2 border-slate-600 text-xs sm:text-sm cursor-pointer active:bg-slate-600"
         >
           ◀ LEFT
         </button>
         <button
           onClick={() => { stateRef.current.basketX = Math.min(205, stateRef.current.basketX + 25); }}
-          className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border-2 border-slate-600 text-xs cursor-pointer active:bg-slate-600"
+          className="px-7 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border-2 border-slate-600 text-xs sm:text-sm cursor-pointer active:bg-slate-600"
         >
           RIGHT ▶
         </button>
       </div>
-      <p className="text-[9px] text-slate-400 mt-2 text-center">
+      <p className="text-[10px] sm:text-xs text-slate-400 mt-2 text-center">
         Catch 15 falling spirits in the basin. Every single spirit must be caught!
       </p>
     </div>

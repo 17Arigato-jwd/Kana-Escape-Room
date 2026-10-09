@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { RoomData } from '../../types/game';
 import { sounds } from '../../utils/audio';
+import { getRoomTheme } from '../../utils/theme';
 
 interface RoomVictoryModalProps {
   room: RoomData;
@@ -13,6 +14,8 @@ export const RoomVictoryModal: React.FC<RoomVictoryModalProps> = ({
   collectedKanaCount,
   onProceed,
 }) => {
+  const theme = getRoomTheme(room.id);
+
   useEffect(() => {
     sounds.playDoorOpen();
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -26,7 +29,12 @@ export const RoomVictoryModal: React.FC<RoomVictoryModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-xs p-4">
-      <div className="relative bg-[#17162b] border-4 border-emerald-500 pixel-box p-8 max-w-md w-full shadow-2xl flex flex-col items-center text-center gap-5">
+      <div className={`relative bg-[#17162b] border-4 ${theme.borderClass} ${theme.pixelBoxClass} p-8 max-w-md w-full shadow-2xl flex flex-col items-center text-center gap-5 animate-in fade-in zoom-in-95 duration-200`}>
+        {/* Authentic Japanese Hanko Seal Stamp */}
+        <div className="absolute top-4 right-4 w-12 h-12 hanko-stamp text-xs tracking-tighter select-none animate-in zoom-in-50 duration-300">
+          {theme.hankoText}
+        </div>
+
         <span className="font-pixel text-xs text-emerald-400 tracking-widest">
           ROOM {room.number} ESCAPED!
         </span>
@@ -38,9 +46,9 @@ export const RoomVictoryModal: React.FC<RoomVictoryModalProps> = ({
         </h2>
 
         {/* Word Solved Card */}
-        <div className="bg-slate-900/90 border-2 border-slate-700 p-4 w-full flex flex-col items-center gap-1">
+        <div className="bg-slate-950 border-2 border-slate-700 p-4 w-full flex flex-col items-center gap-1 shadow-inner">
           <span className="text-[10px] text-slate-400 font-pixel">KEYWORD SOLVED:</span>
-          <span className="font-kana text-3xl font-bold text-yellow-300">
+          <span className="font-kana text-4xl font-bold text-yellow-300 tracking-wider">
             {room.targetWord}
           </span>
           <span className="text-sm font-semibold text-emerald-300 font-sans">

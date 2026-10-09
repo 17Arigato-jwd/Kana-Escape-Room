@@ -151,6 +151,7 @@ export const GameRockPaperScissors: React.FC<GameRockPaperScissorsProps> = ({
 
     let currentBeat = 0;
     sounds.playBlip(480);
+    sounds.speakJapanese('じゃんけん');
 
     if (beatTimerRef.current) clearInterval(beatTimerRef.current);
     beatTimerRef.current = window.setInterval(() => {
@@ -193,6 +194,7 @@ export const GameRockPaperScissors: React.FC<GameRockPaperScissorsProps> = ({
 
     // Morphing transition before final reveal!
     sounds.playSelect();
+    sounds.speakJapanese('ぽん');
     setRoundState('MORPHING');
 
     const randomIdx = Math.floor(Math.random() * CHOICES.length);
@@ -205,6 +207,7 @@ export const GameRockPaperScissors: React.FC<GameRockPaperScissorsProps> = ({
 
       if (chosen === ai) {
         sounds.playBlip(440);
+        sounds.speakJapanese('あいこでしょ');
         setRoundResult('DRAW (AIKO DESHO)! Press NEXT ROUND!');
       } else {
         const playerObj = CHOICES.find((c) => c.id === chosen)!;
@@ -231,6 +234,12 @@ export const GameRockPaperScissors: React.FC<GameRockPaperScissorsProps> = ({
   const handleSelectChoice = (choice: Choice) => {
     if (roundState !== 'PUMPING' || won) return;
     sounds.playBlip(540);
+    const speechMap: Record<Choice, string> = {
+      ROCK: 'グー',
+      PAPER: 'パー',
+      SCISSORS: 'チョキ',
+    };
+    sounds.speakJapanese(speechMap[choice]);
     setPendingChoice(choice);
     setRoundResult(`SELECTED: ${choice}! You can still change it before 0s!`);
   };
@@ -271,17 +280,17 @@ export const GameRockPaperScissors: React.FC<GameRockPaperScissorsProps> = ({
   };
 
   return (
-    <div className="flex flex-col items-center select-none font-pixel w-full max-w-xs">
+    <div className="flex flex-col items-center select-none font-pixel w-full max-w-[560px]">
       {/* Header */}
-      <div className="flex justify-between items-center w-full mb-2 text-xs">
+      <div className="flex justify-between items-center w-full mb-2 text-xs sm:text-sm">
         <span className="text-cyan-400 font-bold">YOU: {playerScore}/{targetWins}</span>
-        <span className="text-amber-400 text-[10px] tracking-widest font-mono">JANKEN RITUAL</span>
+        <span className="text-amber-400 text-[10px] sm:text-xs tracking-widest font-mono">JANKEN RITUAL</span>
         <span className="text-rose-400 font-bold">AI: {aiScore}/{targetWins}</span>
       </div>
 
-      <div className="bg-slate-950 p-4 border-4 border-slate-700 shadow-2xl w-full flex flex-col items-center relative">
+      <div className="bg-slate-950 p-4 sm:p-6 border-4 border-slate-700 shadow-2xl w-full flex flex-col items-center relative">
         {/* Countdown Bar */}
-        <div className="w-full bg-slate-900 border border-slate-700 h-2 mb-3 overflow-hidden">
+        <div className="w-full bg-slate-900 border border-slate-700 h-2.5 mb-4 overflow-hidden">
           <div
             className={`h-full transition-all duration-75 ${
               timeLeft < 1.0 ? 'bg-red-500 animate-pulse' : 'bg-cyan-400'
@@ -291,50 +300,52 @@ export const GameRockPaperScissors: React.FC<GameRockPaperScissorsProps> = ({
         </div>
 
         {/* Dual Arena: AI (opposite) and Player */}
-        <div className="flex justify-around items-center w-full bg-slate-900/90 border-2 border-slate-800 p-3 mb-3 relative overflow-hidden">
+        <div className="flex justify-around items-center w-full bg-slate-900/90 border-2 border-slate-800 p-4 sm:p-6 mb-4 relative overflow-hidden rounded">
           {/* PLAYER (Left) */}
-          <div className="flex flex-col items-center gap-1 z-10">
-            <span className="text-[10px] text-cyan-300 font-bold">PLAYER</span>
+          <div className="flex flex-col items-center gap-1.5 z-10">
+            <span className="text-xs sm:text-sm text-cyan-300 font-bold">PLAYER</span>
 
             <div
-              className={`relative w-22 h-22 bg-slate-850 border-2 border-cyan-500 flex flex-col items-center justify-center shadow transition-all duration-200 ${
+              className={`relative w-28 h-28 sm:w-36 sm:h-36 bg-slate-850 border-2 border-cyan-500 flex flex-col items-center justify-center shadow transition-all duration-200 rounded ${
                 roundState === 'MORPHING' ? 'scale-75 rotate-180 animate-spin opacity-80' : ''
               }`}
             >
-              {roundState === 'PUMPING' ? (
-                <div className="flex flex-col items-center justify-center relative">
-                  {/* Striking Fist */}
-                  <div
-                    className={`transition-transform duration-100 ${
-                      pumpBeat === 1 ? 'translate-y-3 scale-110' : '-translate-y-1'
-                    }`}
-                  >
-                    <PixelFist color="#38bdf8" />
-                  </div>
-                  {/* Palm */}
-                  <div className="mt-1">
-                    <PixelPalm color="#facc15" />
-                  </div>
-                  {/* Spark */}
-                  {pumpBeat === 1 && (
-                    <div className="absolute top-4">
-                      <PixelSpark />
+              <div className="scale-125 sm:scale-150 origin-center flex flex-col items-center justify-center">
+                {roundState === 'PUMPING' ? (
+                  <div className="flex flex-col items-center justify-center relative">
+                    {/* Striking Fist */}
+                    <div
+                      className={`transition-transform duration-100 ${
+                        pumpBeat === 1 ? 'translate-y-3 scale-110' : '-translate-y-1'
+                      }`}
+                    >
+                      <PixelFist color="#38bdf8" />
                     </div>
-                  )}
-                  {/* Selected move preview watermark badge */}
-                  {pendingChoice && (
-                    <div className="absolute -bottom-1 text-[8px] bg-cyan-950/90 text-cyan-300 px-1 border border-cyan-500">
-                      {pendingChoice}
+                    {/* Palm */}
+                    <div className="mt-1">
+                      <PixelPalm color="#facc15" />
                     </div>
-                  )}
-                </div>
-              ) : roundState === 'MORPHING' ? (
-                <div className="animate-spin text-cyan-400 text-lg">✦</div>
-              ) : playerChoice ? (
-                CHOICES.find((c) => c.id === playerChoice)?.renderIcon()
-              ) : (
-                <PixelFist color="#64748b" />
-              )}
+                    {/* Spark */}
+                    {pumpBeat === 1 && (
+                      <div className="absolute top-4">
+                        <PixelSpark />
+                      </div>
+                    )}
+                    {/* Selected move preview watermark badge */}
+                    {pendingChoice && (
+                      <div className="absolute -bottom-2 text-[8px] bg-cyan-950/90 text-cyan-300 px-1 border border-cyan-500 whitespace-nowrap">
+                        {pendingChoice}
+                      </div>
+                    )}
+                  </div>
+                ) : roundState === 'MORPHING' ? (
+                  <div className="animate-spin text-cyan-400 text-lg">✦</div>
+                ) : playerChoice ? (
+                  CHOICES.find((c) => c.id === playerChoice)?.renderIcon()
+                ) : (
+                  <PixelFist color="#64748b" />
+                )}
+              </div>
             </div>
           </div>
 
@@ -342,60 +353,62 @@ export const GameRockPaperScissors: React.FC<GameRockPaperScissorsProps> = ({
           <div className="flex flex-col items-center min-w-[70px]">
             {roundState === 'PUMPING' ? (
               <div className="flex flex-col items-center animate-bounce">
-                <span className="text-amber-400 font-bold text-xs tracking-wider">
+                <span className="text-amber-400 font-bold text-sm sm:text-base tracking-wider">
                   {pumpBeat === 0 ? 'JAN!' : pumpBeat === 1 ? 'KEN!' : 'PON!'}
                 </span>
-                <span className="text-rose-400 font-mono text-sm font-bold">
+                <span className="text-rose-400 font-mono text-base sm:text-lg font-bold">
                   {timeLeft.toFixed(1)}s
                 </span>
               </div>
             ) : roundState === 'MORPHING' ? (
-              <span className="text-yellow-400 font-mono text-xs animate-ping font-bold">PON!</span>
+              <span className="text-yellow-400 font-mono text-sm sm:text-base animate-ping font-bold">PON!</span>
             ) : (
-              <span className="font-bold text-xs text-yellow-400 tracking-widest">VS</span>
+              <span className="font-bold text-sm sm:text-base text-yellow-400 tracking-widest">VS</span>
             )}
           </div>
 
           {/* AI GUARDIAN (Right / Opposite) */}
-          <div className="flex flex-col items-center gap-1 z-10">
-            <span className="text-[10px] text-rose-300 font-bold">GUARDIAN</span>
+          <div className="flex flex-col items-center gap-1.5 z-10">
+            <span className="text-xs sm:text-sm text-rose-300 font-bold">GUARDIAN</span>
 
             <div
-              className={`relative w-22 h-22 bg-slate-850 border-2 border-rose-500 flex flex-col items-center justify-center shadow transition-all duration-200 ${
+              className={`relative w-28 h-28 sm:w-36 sm:h-36 bg-slate-850 border-2 border-rose-500 flex flex-col items-center justify-center shadow transition-all duration-200 rounded ${
                 roundState === 'MORPHING' ? 'scale-75 -rotate-180 animate-spin opacity-80' : ''
               }`}
             >
-              {roundState === 'PUMPING' ? (
-                <div className="flex flex-col items-center justify-center relative">
-                  <div
-                    className={`transition-transform duration-100 ${
-                      pumpBeat === 1 ? 'translate-y-3 scale-110' : '-translate-y-1'
-                    }`}
-                  >
-                    <PixelFist color="#ef4444" />
-                  </div>
-                  <div className="mt-1">
-                    <PixelPalm color="#fca5a5" flip />
-                  </div>
-                  {pumpBeat === 1 && (
-                    <div className="absolute top-4">
-                      <PixelSpark />
+              <div className="scale-125 sm:scale-150 origin-center flex flex-col items-center justify-center">
+                {roundState === 'PUMPING' ? (
+                  <div className="flex flex-col items-center justify-center relative">
+                    <div
+                      className={`transition-transform duration-100 ${
+                        pumpBeat === 1 ? 'translate-y-3 scale-110' : '-translate-y-1'
+                      }`}
+                    >
+                      <PixelFist color="#ef4444" />
                     </div>
-                  )}
-                </div>
-              ) : roundState === 'MORPHING' ? (
-                <div className="animate-spin text-rose-400 text-lg">✦</div>
-              ) : aiChoice ? (
-                CHOICES.find((c) => c.id === aiChoice)?.renderIcon()
-              ) : (
-                <PixelGuardianFace />
-              )}
+                    <div className="mt-1">
+                      <PixelPalm color="#fca5a5" flip />
+                    </div>
+                    {pumpBeat === 1 && (
+                      <div className="absolute top-4">
+                        <PixelSpark />
+                      </div>
+                    )}
+                  </div>
+                ) : roundState === 'MORPHING' ? (
+                  <div className="animate-spin text-rose-400 text-lg">✦</div>
+                ) : aiChoice ? (
+                  CHOICES.find((c) => c.id === aiChoice)?.renderIcon()
+                ) : (
+                  <PixelGuardianFace />
+                )}
+              </div>
             </div>
           </div>
         </div>
 
         {/* Round Feedback Status */}
-        <div className="text-[10px] text-yellow-300 font-bold mb-3 text-center h-4 tracking-wider">
+        <div className="text-xs sm:text-sm text-yellow-300 font-bold mb-4 text-center h-5 tracking-wider">
           {roundResult}
         </div>
 
@@ -403,14 +416,14 @@ export const GameRockPaperScissors: React.FC<GameRockPaperScissorsProps> = ({
         {roundState !== 'PUMPING' && roundState !== 'MORPHING' && !won && aiScore < targetWins && (
           <button
             onClick={startRound}
-            className="mb-3 px-6 py-2 bg-yellow-400 hover:bg-yellow-300 text-black font-pixel text-xs font-bold border-2 border-white cursor-pointer active:translate-y-0.5 shadow-md animate-pulse"
+            className="mb-4 px-8 py-2.5 bg-yellow-400 hover:bg-yellow-300 text-black font-pixel text-xs sm:text-sm font-bold border-2 border-white cursor-pointer active:translate-y-0.5 shadow-md animate-pulse rounded"
           >
             {roundState === 'IDLE' ? '▶ START JANKEN [SPACE]' : '▶ NEXT ROUND [SPACE]'}
           </button>
         )}
 
         {/* Action Choice Buttons - Keep enabled & allow freely changing selection until timer runs out! */}
-        <div className="grid grid-cols-3 gap-2 w-full">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full">
           {CHOICES.map((c) => {
             const isClickable = roundState === 'PUMPING';
             const isSelected = pendingChoice === c.id;
@@ -419,7 +432,7 @@ export const GameRockPaperScissors: React.FC<GameRockPaperScissorsProps> = ({
                 key={c.id}
                 onClick={() => handleSelectChoice(c.id)}
                 disabled={!isClickable}
-                className={`py-2 px-1 flex flex-col items-center justify-center border-2 transition-all ${
+                className={`py-3 sm:py-4 px-2 flex flex-col items-center justify-center border-2 transition-all rounded ${
                   isClickable
                     ? isSelected
                       ? 'bg-amber-500 scale-105 border-white ring-2 ring-cyan-400 text-black cursor-pointer shadow-xl'
@@ -427,37 +440,35 @@ export const GameRockPaperScissors: React.FC<GameRockPaperScissorsProps> = ({
                     : 'bg-slate-800/60 border-slate-700 text-slate-500 cursor-not-allowed opacity-60'
                 }`}
               >
-                <div className="mb-1">{c.renderIcon()}</div>
-                <span className="text-[9px] font-bold tracking-wider">{c.label}</span>
+                <div className="mb-1.5 scale-110 sm:scale-125">{c.renderIcon()}</div>
+                <span className="text-xs sm:text-sm font-bold tracking-wider">{c.label}</span>
                 {isSelected && isClickable && (
-                  <span className="text-[7px] text-cyan-300 mt-0.5">LOCKED IN</span>
+                  <span className="text-[8px] sm:text-[10px] text-cyan-300 mt-1 font-bold">LOCKED IN</span>
                 )}
               </button>
             );
           })}
         </div>
 
-        {/* Won Overlay */}
         {won && (
           <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center border-2 border-emerald-400 p-4 animate-in fade-in z-20">
-            <span className="text-emerald-400 text-sm mb-1 font-bold">★ JANKEN MASTER! ★</span>
-            <span className="text-[10px] text-slate-300 mb-3">Defeated the guardian machine!</span>
+            <span className="text-emerald-400 text-base sm:text-lg mb-2 font-bold">★ JANKEN MASTER! ★</span>
+            <span className="text-xs sm:text-sm text-slate-300 mb-4 text-center">Defeated the guardian machine!</span>
             <button
               onClick={() => onSuccessRef.current()}
-              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold border-2 border-white cursor-pointer shadow-lg"
+              className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black text-xs sm:text-sm font-bold border-2 border-white cursor-pointer shadow-lg"
             >
               CLAIM REWARD NOW
             </button>
           </div>
         )}
 
-        {/* AI Won Match */}
         {aiScore >= targetWins && !won && (
           <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center border-2 border-red-500 p-4 z-20">
-            <span className="text-red-400 text-xs mb-3 font-bold">AI GUARDIAN WON MATCH</span>
+            <span className="text-red-400 text-sm sm:text-base mb-3 font-bold">AI GUARDIAN WON MATCH</span>
             <button
               onClick={restartAll}
-              className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white text-[10px] border-2 border-white cursor-pointer"
+              className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-xs sm:text-sm font-bold border-2 border-white cursor-pointer"
             >
               PLAY AGAIN
             </button>
@@ -465,7 +476,7 @@ export const GameRockPaperScissors: React.FC<GameRockPaperScissorsProps> = ({
         )}
       </div>
 
-      <p className="text-[9px] text-slate-400 mt-2 text-center">
+      <p className="text-[10px] sm:text-xs text-slate-400 mt-3 text-center">
         Select a move and freely change it until 0s • Watch the morphing reveal!
       </p>
     </div>

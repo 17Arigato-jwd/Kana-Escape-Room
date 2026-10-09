@@ -51,6 +51,7 @@ export const GameCardMatch: React.FC<GameCardMatchProps> = ({ onSuccess }) => {
     }
 
     sounds.playBlip(540);
+    sounds.speakJapanese(cards[index].kana);
     const nextCards = cards.map((c, i) => (i === index ? { ...c, flipped: true } : c));
     setCards(nextCards);
 
@@ -108,16 +109,16 @@ export const GameCardMatch: React.FC<GameCardMatchProps> = ({ onSuccess }) => {
   };
 
   return (
-    <div className="flex flex-col items-center select-none font-pixel w-full max-w-xs">
-      <div className="flex justify-between items-center w-full mb-2 text-xs">
-        <span className="text-amber-400">MOVES: {moves}</span>
-        <span className="text-cyan-400 font-mono text-[10px]">4×4 MATRIX</span>
-        <span className="text-emerald-400">PAIRS: {matchesCount}/{KANA_PAIRS.length}</span>
+    <div className="flex flex-col items-center select-none font-pixel w-full max-w-[540px]">
+      <div className="flex justify-between items-center w-full mb-2 text-xs sm:text-sm">
+        <span className="text-amber-400 font-bold">MOVES: {moves}</span>
+        <span className="text-cyan-400 font-mono text-[10px] sm:text-xs">4×4 MATRIX</span>
+        <span className="text-emerald-400 font-bold">PAIRS: {matchesCount}/{KANA_PAIRS.length}</span>
       </div>
 
-      <div className="bg-slate-950 p-3 border-4 border-slate-700 shadow-2xl relative w-full flex flex-col items-center">
+      <div className="bg-slate-950 p-3 sm:p-5 border-4 border-slate-700 shadow-2xl relative w-full flex flex-col items-center">
         {/* 4x4 Grid of Cards */}
-        <div className="grid grid-cols-4 gap-2 w-full bg-slate-900 border border-slate-800 p-2 rounded-sm">
+        <div className="grid grid-cols-4 gap-2 sm:gap-3 w-full bg-slate-900 border border-slate-800 p-2 sm:p-3 rounded">
           {cards.map((card, idx) => {
             const isRevealed = card.flipped || card.matched;
             return (
@@ -125,7 +126,7 @@ export const GameCardMatch: React.FC<GameCardMatchProps> = ({ onSuccess }) => {
                 key={card.id}
                 onClick={() => handleCardClick(idx)}
                 disabled={isRevealed || won}
-                className={`h-14 sm:h-16 border-2 rounded-none flex flex-col items-center justify-center font-bold transition-all cursor-pointer ${
+                className={`h-20 sm:h-24 md:h-28 border-2 rounded flex flex-col items-center justify-center font-bold transition-all cursor-pointer ${
                   isRevealed
                     ? `${card.color} text-black border-white shadow-md scale-95`
                     : 'bg-indigo-950 hover:bg-indigo-900 border-indigo-700 active:scale-95'
@@ -133,11 +134,11 @@ export const GameCardMatch: React.FC<GameCardMatchProps> = ({ onSuccess }) => {
               >
                 {isRevealed ? (
                   <>
-                    <span className="font-kana text-xl font-bold leading-none">{card.kana}</span>
-                    <span className="text-[8px] font-mono leading-none mt-1">{card.romaji}</span>
+                    <span className="font-kana text-2xl sm:text-3xl md:text-4xl font-bold leading-none">{card.kana}</span>
+                    <span className="text-[10px] sm:text-xs font-mono leading-none mt-1.5">{card.romaji}</span>
                   </>
                 ) : (
-                  <span className="text-indigo-400 text-sm font-bold">?</span>
+                  <span className="text-indigo-400 text-xl sm:text-2xl font-bold">?</span>
                 )}
               </button>
             );
@@ -146,11 +147,11 @@ export const GameCardMatch: React.FC<GameCardMatchProps> = ({ onSuccess }) => {
 
         {won && (
           <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center border-2 border-emerald-400 p-4 animate-in fade-in z-10">
-            <span className="text-emerald-400 text-sm mb-1 font-bold">★ 4×4 MATRIX SOLVED! ★</span>
-            <span className="text-[10px] text-slate-300 mb-3">All 8 Kanji pairs matched!</span>
+            <span className="text-emerald-400 text-base sm:text-lg mb-2 font-bold">★ 4×4 MATRIX SOLVED! ★</span>
+            <span className="text-xs sm:text-sm text-slate-300 mb-4 text-center">All 8 Kanji pairs matched!</span>
             <button
               onClick={() => onSuccessRef.current()}
-              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold border-2 border-white cursor-pointer shadow-lg"
+              className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black text-xs sm:text-sm font-bold border-2 border-white cursor-pointer shadow-lg"
             >
               CLAIM REWARD NOW
             </button>
@@ -158,7 +159,7 @@ export const GameCardMatch: React.FC<GameCardMatchProps> = ({ onSuccess }) => {
         )}
       </div>
 
-      <div className="flex justify-between items-center w-full mt-2 text-[9px] text-slate-400">
+      <div className="flex justify-between items-center w-full mt-2 text-[10px] sm:text-xs text-slate-400">
         <span>Find matching Kanji pairs (16 cards total)</span>
         <button onClick={restart} className="text-slate-400 hover:text-white underline cursor-pointer">
           RESET

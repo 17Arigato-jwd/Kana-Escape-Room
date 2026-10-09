@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CharacterId } from '../../types/game';
+import { CharacterId, GameSaveState } from '../../types/game';
 import { CHARACTERS } from '../../data/characters';
 import { getCharacterSprite } from '../../utils/pixelArt';
 import { sounds } from '../../utils/audio';
 import { LeaderboardModal } from './LeaderboardModal';
+import { SaveTransferModal } from './SaveTransferModal';
 
 interface TitleScreenProps {
   hasSaveData: boolean;
@@ -12,6 +13,7 @@ interface TitleScreenProps {
   onStartNewGame: () => void;
   onContinueGame: () => void;
   onResetSave: () => void;
+  onSaveImported?: (data: GameSaveState) => void;
   volumeEnabled: boolean;
   onToggleVolume: () => void;
 }
@@ -23,12 +25,14 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
   onStartNewGame,
   onContinueGame,
   onResetSave,
+  onSaveImported,
   volumeEnabled,
   onToggleVolume,
 }) => {
   const [showConfirmReset, setShowConfirmReset] = useState(false);
   const [showConfirmNewGame, setShowConfirmNewGame] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [showSaveTransfer, setShowSaveTransfer] = useState(false);
   const [animFrame, setAnimFrame] = useState(0);
 
   // Animate character preview idle
@@ -42,7 +46,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
   const currentChar = CHARACTERS.find((c) => c.id === selectedCharacter) || CHARACTERS[0];
 
   return (
-    <div className="fixed inset-0 z-40 bg-[#0d0d1a] flex flex-col items-center justify-between p-6 select-none overflow-y-auto">
+    <div className="fixed inset-0 z-40 bg-[#0c0b18] wagara-ichimatsu bg-opacity-90 flex flex-col items-center justify-between p-6 select-none overflow-y-auto">
       {/* Top Header / Sound Toggle */}
       <div className="w-full max-w-3xl flex justify-between items-center text-xs font-pixel text-slate-400">
         <span className="text-[10px] text-amber-500/80">PIXEL-ART ADVENTURE</span>
@@ -63,7 +67,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
           KANA ESCAPE ROOM
         </h1>
         <p className="font-pixel text-[10px] sm:text-xs text-cyan-300 tracking-wide mb-6">
-          Collect Kana. Build Words. Escape.
+          Collect Kana • Craft Words • Escape
         </p>
 
         {/* Character Selection Box */}
@@ -72,7 +76,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
             CHOOSE YOUR CHARACTER
           </span>
 
-          <div className="flex justify-center gap-3 sm:gap-4 mb-4">
+          <div className="grid grid-cols-2 sm:flex sm:justify-center gap-2 sm:gap-4 mb-4">
             {CHARACTERS.map((char) => {
               const isSelected = char.id === selectedCharacter;
               return (
@@ -143,7 +147,18 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
             className="py-2.5 bg-indigo-950/80 hover:bg-indigo-900 text-amber-300 font-pixel text-xs border-2 border-amber-500/70 cursor-pointer active:translate-y-0.5 flex items-center justify-center gap-2 shadow-sm"
           >
             <span>🏆</span>
-            <span>HALL OF FAME LEADERBOARD</span>
+            <span>HALL OF FAME</span>
+          </button>
+
+          <button
+            onClick={() => {
+              sounds.playSelect();
+              setShowSaveTransfer(true);
+            }}
+            className="py-2 bg-slate-900 hover:bg-slate-800 text-cyan-300 font-pixel text-[10px] border border-cyan-700/80 cursor-pointer active:translate-y-0.5 flex items-center justify-center gap-1.5 shadow-sm"
+          >
+            <span>💾</span>
+            <span>BACKUP & RESTORE SAVE</span>
           </button>
 
           {hasSaveData && (
@@ -152,7 +167,7 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                 sounds.playSelect();
                 setShowConfirmReset(true);
               }}
-              className="py-1.5 text-rose-400 hover:text-rose-300 text-[10px] font-pixel cursor-pointer underline"
+              className="py-1 text-rose-400 hover:text-rose-300 text-[10px] font-pixel cursor-pointer underline"
             >
               RESET SAVED PROGRESS
             </button>
@@ -161,8 +176,8 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
       </div>
 
       {/* Footer Info */}
-      <div className="text-[10px] font-pixel text-slate-500 text-center">
-        Use Arrow Keys or WASD to Explore • Press [E] to Interact • Press [I] for Inventory
+      <div className="text-[10px] font-pixel text-slate-500 text-center leading-relaxed max-w-lg">
+        Keyboard: Arrow Keys / WASD • Touch: Virtual D-Pad & [E] Action • [I] Inventory
       </div>
 
       {/* Confirm New Game Modal */}
@@ -225,6 +240,16 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
 
       {/* Leaderboard Modal */}
       {showLeaderboard && <LeaderboardModal onClose={() => setShowLeaderboard(false)} />}
+
+      {/* Save Backup & Restore Modal */}
+      {showSaveTransfer && (
+        <SaveTransferModal
+          onClose={() => setShowSaveTransfer(false)}
+          onSaveImported={(data) => {
+            if (onSaveImported) onSaveImported(data);
+          }}
+        />
+      )}
     </div>
   );
 };

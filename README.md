@@ -26,6 +26,49 @@ The game is deployed and playable in any modern desktop or mobile web browser:
 
 ---
 
+## ✨ Features
+
+- **3 Progressive Japanese Themed Escape Rooms**:
+  - **Room 1: The Cyber Akihabara Workshop (`秋葉原・電脳工房`)** — Retro computing & arcade den with hanging paper Chōchin lanterns, cedar parquet floors, and Ichimatsu checkerboard motifs (*Target: かぎ / Key*).
+  - **Room 2: The Grand Ryokan Archive (`古文書院・茶室`)** — Ancient Japanese library with sliding Shoji screen doors, bonsai trees, candle sconces, and Asanoha hemp-leaf motifs (*Target: とびら / Door*).
+  - **Room 3: The Sacred Torii Sanctum (`神聖鳥居・月光の神域`)** — Moonlit shrine complex featuring woven Tatami mats, drifting Sakura Fubuki cherry blossoms, and a majestic Vermillion Torii Gate (*Target: でぐち / Exit*).
+
+- **20+ Unique Arcade Minigames & Puzzles**:
+  - *Reflex & Timing*: Timed Passcode Decryption, Pong Core Battle, Flappy Kana Glider, Lane Runner Obstacle Dodge.
+  - *Classic Retro Arcades*: Snake, 2048, Wall Breaker (Breakout), Trajectory Catapult (Slingshot), Precision Darts.
+  - *Logic & Strategy*: Sliding Tile Puzzle, Match-3 Gem Align, Tic-Tac-Toe Minimax, Dots & Boxes Grid, Sea Battle (Battleship), Rock-Paper-Scissors Duel, Memory Sequence Flashing, Card Flip Pair Matching, Mechanical Bolts Disassembly, Falling Kana Basket Catcher, Educational Japanese Color-Matching Wires.
+
+- **Dual-Engine Japanese Pronunciation Audio**:
+  - Pre-cached offline native voice audio clips for all Kana syllables, vocabulary words, and colors.
+  - Automatic fallback to browser SpeechSynthesis API.
+  - Natural acoustic cadence between syllables and words during word crafting, with manual replay buttons.
+
+- **Mobile & Desktop Responsive Engine**:
+  - Live aspect ratio switcher supporting **PC 16:9 Widescreen** and **Mobile 3:2** ratios.
+  - Toggleable on-screen virtual 8-way D-Pad and action buttons for smartphone and tablet touch gameplay.
+  - Maximized playable viewport eliminating dead margins.
+
+- **Dynamic In-Room Kana Shuffle**:
+  - Randomizes available reward letters across stations in each chamber per run, ensuring endless replayability while strictly guaranteeing 100% word solvability.
+
+- **Interactive Word Crafter & Japanese Dictionary**:
+  - Freely arrange Kana onto crafting slots to discover over 1,500+ recognized Japanese words.
+  - Full dictionary metadata display: Hiragana/Katakana script, Kanji equivalents, Romaji pronunciation, English meanings, and icon representations.
+
+- **8-Directional Pixel Character Movement**:
+  - Authentic 8-way movement animations (including 3/4 isometric diagonal views: down-left, down-right, up-left, up-right).
+  - Grounded walking cadence with weighted vertical step-bobbing.
+  - Surface-acoustic footsteps (wood parquet, stone tile, tatami straw) and tactile collision wall bumping sound effects.
+
+- **Subtle Atmospheric Pixel Ambience**:
+  - Sakura Fubuki falling cherry blossom petals with organic sine-wave wind sway physics.
+  - Hanging paper Chōchin lantern glows, candle wall sconces, and ancient stone lanterns (*Tōrō*).
+  - Floating shrine spirit embers (*Hitodama*) and golden dust motes.
+
+- **Named Runs Hall of Fame Leaderboard & Save Data Migration**:
+  - Name and record individual escape attempts sorted by fastest escape time and Kana collected.
+  - Run Inspector: Click any leaderboard entry to review its full summary and crafted Japanese vocabulary.
+  - JSON Save Data Backup & Transfer tool for cross-device migration.
 ## Overview
 
 **Kana Escape Room** blends retro top-down dungeon exploration with interactive language pedagogy. Players awaken inside locked thematic chambers—a cybernetic detective workshop, a historic stone archive, and a sacred shrine vault. To progress, players must inspect the room, solve arcade trials to discover individual Japanese Kana tiles, and combine them at a crafting workbench to form target Japanese vocabulary words (such as **かぎ** `[kagi]` *Key*, **とびら** `[tobira]` *Door*, and **でぐち** `[deguchi]` *Exit*) to unlock subsequent areas.

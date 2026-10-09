@@ -234,25 +234,54 @@ export const GamePong: React.FC<GamePongProps> = ({ onSuccess, targetPoints = 3 
   }, [gameOver]);
 
   return (
-    <div className="flex flex-col items-center select-none font-pixel w-full max-w-xs">
-      <div className="flex justify-between items-center w-full mb-2 text-xs">
-        <span className="text-cyan-400">YOU: {playerScore}/{targetPoints}</span>
-        <span className="text-amber-300 text-[10px] font-mono font-bold tracking-wider">
+    <div className="flex flex-col items-center select-none font-pixel w-full max-w-[580px]">
+      <div className="flex justify-between items-center w-full mb-2 text-xs sm:text-sm px-1">
+        <span className="text-cyan-400 font-bold">YOU: {playerScore}/{targetPoints}</span>
+        <span className="text-amber-300 text-[10px] sm:text-xs font-mono font-bold tracking-wider">
           SPEED: {speedMultiplier <= 1 ? '1x' : `${speedMultiplier.toFixed(1)}x`}
         </span>
-        <span className="text-rose-400">AI: {aiScore}/{targetPoints}</span>
+        <span className="text-rose-400 font-bold">AI: {aiScore}/{targetPoints}</span>
       </div>
 
-      <div className="relative bg-slate-950 p-2 border-4 border-slate-700 shadow-2xl">
-        <canvas ref={canvasRef} width={260} height={200} className="block" />
+      <div className="relative bg-slate-950 p-2 border-4 border-slate-700 shadow-2xl touch-none w-full flex justify-center overflow-hidden">
+        <canvas
+          ref={canvasRef}
+          width={260}
+          height={200}
+          className="block touch-none cursor-pointer w-full max-w-[560px] aspect-[260/200] object-contain pixelated"
+          onTouchStart={(e) => {
+            if (e.touches[0] && canvasRef.current) {
+              const rect = canvasRef.current.getBoundingClientRect();
+              const scaleY = canvasRef.current.height / rect.height;
+              const y = (e.touches[0].clientY - rect.top) * scaleY;
+              stateRef.current.playerY = Math.max(4, Math.min(200 - stateRef.current.paddleH - 4, y - stateRef.current.paddleH / 2));
+            }
+          }}
+          onTouchMove={(e) => {
+            if (e.touches[0] && canvasRef.current) {
+              const rect = canvasRef.current.getBoundingClientRect();
+              const scaleY = canvasRef.current.height / rect.height;
+              const y = (e.touches[0].clientY - rect.top) * scaleY;
+              stateRef.current.playerY = Math.max(4, Math.min(200 - stateRef.current.paddleH - 4, y - stateRef.current.paddleH / 2));
+            }
+          }}
+          onMouseMove={(e) => {
+            if (e.buttons === 1 && canvasRef.current) {
+              const rect = canvasRef.current.getBoundingClientRect();
+              const scaleY = canvasRef.current.height / rect.height;
+              const y = (e.clientY - rect.top) * scaleY;
+              stateRef.current.playerY = Math.max(4, Math.min(200 - stateRef.current.paddleH - 4, y - stateRef.current.paddleH / 2));
+            }
+          }}
+        />
 
         {won && (
           <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center border-2 border-emerald-400 p-4 animate-in fade-in">
-            <span className="text-emerald-400 text-sm mb-1 font-bold">★ PONG CHAMPION! ★</span>
-            <span className="text-[10px] text-slate-300 mb-3">AI servo speed steadily outpaced!</span>
+            <span className="text-emerald-400 text-sm sm:text-base mb-1 font-bold">★ PONG CHAMPION! ★</span>
+            <span className="text-xs text-slate-300 mb-3">AI servo speed steadily outpaced!</span>
             <button
               onClick={() => onSuccessRef.current()}
-              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold border-2 border-white cursor-pointer shadow-lg"
+              className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black text-xs sm:text-sm font-bold border-2 border-white cursor-pointer active:translate-y-0.5 shadow-lg"
             >
               CLAIM REWARD NOW
             </button>
@@ -261,10 +290,10 @@ export const GamePong: React.FC<GamePongProps> = ({ onSuccess, targetPoints = 3 
 
         {gameOver && !won && (
           <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center border-2 border-red-500 p-4">
-            <span className="text-red-400 text-xs mb-3 font-bold">MATCH LOST</span>
+            <span className="text-red-400 text-sm mb-3 font-bold">MATCH LOST</span>
             <button
               onClick={restart}
-              className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white text-[10px] border-2 border-white cursor-pointer"
+              className="px-5 py-2 bg-red-600 hover:bg-red-500 text-white text-xs border-2 border-white cursor-pointer active:translate-y-0.5"
             >
               TRY AGAIN [SPACE]
             </button>
@@ -279,7 +308,7 @@ export const GamePong: React.FC<GamePongProps> = ({ onSuccess, targetPoints = 3 
           onMouseUp={() => { stateRef.current.keys.up = false; }}
           onTouchStart={() => { stateRef.current.keys.up = true; }}
           onTouchEnd={() => { stateRef.current.keys.up = false; }}
-          className="px-5 py-2 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-200 border border-slate-600 text-xs cursor-pointer"
+          className="px-7 py-2.5 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-200 border-2 border-slate-600 text-xs sm:text-sm cursor-pointer"
         >
           ▲ UP
         </button>
@@ -288,13 +317,13 @@ export const GamePong: React.FC<GamePongProps> = ({ onSuccess, targetPoints = 3 
           onMouseUp={() => { stateRef.current.keys.down = false; }}
           onTouchStart={() => { stateRef.current.keys.down = true; }}
           onTouchEnd={() => { stateRef.current.keys.down = false; }}
-          className="px-5 py-2 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-200 border border-slate-600 text-xs cursor-pointer"
+          className="px-7 py-2.5 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-200 border-2 border-slate-600 text-xs sm:text-sm cursor-pointer"
         >
           ▼ DOWN
         </button>
       </div>
 
-      <p className="text-[9px] text-slate-400 mt-2 text-center">
+      <p className="text-[10px] sm:text-xs text-slate-400 mt-2 text-center">
         W/S or Up/Down • Ball accelerates on each exchange!
       </p>
     </div>

@@ -290,26 +290,56 @@ export const GameWallBreaker: React.FC<GameWallBreakerProps> = ({ onSuccess }) =
   }, []);
 
   return (
-    <div className="flex flex-col items-center select-none font-pixel w-full max-w-xs">
-      <div className="flex justify-between items-center w-full mb-2 text-xs">
-        <span className="text-amber-400">SCORE: {score}</span>
-        <span className="text-yellow-400 font-mono text-[10px]">SPEED: {speedVal}</span>
-        <span className="text-rose-400 text-[10px] font-mono">1 LIFE (NO RESPAWNS)</span>
+    <div className="flex flex-col items-center select-none font-pixel w-full max-w-[580px]">
+      <div className="flex justify-between items-center w-full mb-2 text-xs sm:text-sm px-1">
+        <span className="text-amber-400 font-bold">SCORE: {score}</span>
+        <span className="text-yellow-400 font-mono text-[10px] sm:text-xs">SPEED: {speedVal}</span>
+        <span className="text-rose-400 text-[10px] sm:text-xs font-mono">1 LIFE (NO RESPAWNS)</span>
       </div>
 
       <div
         onClick={() => { stateRef.current.started = true; }}
-        className="relative border-4 border-slate-700 shadow-2xl bg-black cursor-pointer"
+        className="relative border-4 border-slate-700 shadow-2xl bg-black cursor-pointer touch-none w-full flex justify-center overflow-hidden"
       >
-        <canvas ref={canvasRef} width={260} height={200} className="pixelated block" />
+        <canvas
+          ref={canvasRef}
+          width={260}
+          height={200}
+          className="pixelated block touch-none w-full max-w-[560px] aspect-[260/200] object-contain"
+          onTouchStart={(e) => {
+            stateRef.current.started = true;
+            if (e.touches[0] && canvasRef.current) {
+              const rect = canvasRef.current.getBoundingClientRect();
+              const scaleX = canvasRef.current.width / rect.width;
+              const x = (e.touches[0].clientX - rect.left) * scaleX;
+              stateRef.current.paddleX = Math.max(4, Math.min(260 - stateRef.current.paddleW - 4, x - stateRef.current.paddleW / 2));
+            }
+          }}
+          onTouchMove={(e) => {
+            if (e.touches[0] && canvasRef.current) {
+              const rect = canvasRef.current.getBoundingClientRect();
+              const scaleX = canvasRef.current.width / rect.width;
+              const x = (e.touches[0].clientX - rect.left) * scaleX;
+              stateRef.current.paddleX = Math.max(4, Math.min(260 - stateRef.current.paddleW - 4, x - stateRef.current.paddleW / 2));
+            }
+          }}
+          onMouseMove={(e) => {
+            if (e.buttons === 1 && canvasRef.current) {
+              const rect = canvasRef.current.getBoundingClientRect();
+              const scaleX = canvasRef.current.width / rect.width;
+              const x = (e.clientX - rect.left) * scaleX;
+              stateRef.current.paddleX = Math.max(4, Math.min(260 - stateRef.current.paddleW - 4, x - stateRef.current.paddleW / 2));
+            }
+          }}
+        />
 
         {won && (
           <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center border-2 border-emerald-400 p-4 animate-in fade-in">
-            <span className="text-emerald-400 text-sm mb-1 font-bold">★ WALL BREACHED! ★</span>
-            <span className="text-[10px] text-slate-300 mb-3">All security bricks shattered!</span>
+            <span className="text-emerald-400 text-sm sm:text-base mb-1 font-bold">★ WALL BREACHED! ★</span>
+            <span className="text-xs text-slate-300 mb-3">All security bricks shattered!</span>
             <button
               onClick={() => onSuccessRef.current()}
-              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold border-2 border-white cursor-pointer"
+              className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black text-xs sm:text-sm font-bold border-2 border-white cursor-pointer active:translate-y-0.5 shadow-lg"
             >
               CLAIM REWARD NOW
             </button>
@@ -318,11 +348,11 @@ export const GameWallBreaker: React.FC<GameWallBreakerProps> = ({ onSuccess }) =
 
         {gameOver && !won && (
           <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center border-2 border-red-500 p-4">
-            <span className="text-red-400 text-xs mb-1 font-bold">BALL DROPPED!</span>
-            <span className="text-[9px] text-slate-300 mb-3">Single-life challenge. Ball accelerates on every hit.</span>
+            <span className="text-red-400 text-sm sm:text-base mb-1 font-bold">BALL DROPPED!</span>
+            <span className="text-[10px] text-slate-300 mb-3">Single-life challenge. Ball accelerates on every hit.</span>
             <button
               onClick={restart}
-              className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white text-[10px] border-2 border-white cursor-pointer"
+              className="px-5 py-2 bg-red-600 hover:bg-red-500 text-white text-xs border-2 border-white cursor-pointer active:translate-y-0.5"
             >
               TRY AGAIN
             </button>
@@ -333,24 +363,24 @@ export const GameWallBreaker: React.FC<GameWallBreakerProps> = ({ onSuccess }) =
       <div className="flex gap-4 mt-3 w-full justify-center">
         <button
           onClick={() => { stateRef.current.paddleX = Math.max(4, stateRef.current.paddleX - 25); }}
-          className="px-5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border-2 border-slate-600 text-xs cursor-pointer active:bg-slate-600"
+          className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border-2 border-slate-600 text-xs sm:text-sm cursor-pointer active:bg-slate-600"
         >
           ◀ LEFT
         </button>
         <button
           onClick={() => { stateRef.current.started = true; }}
-          className="px-4 py-1.5 bg-yellow-500 hover:bg-yellow-400 text-black font-bold text-xs border-2 border-white cursor-pointer"
+          className="px-6 py-2 bg-yellow-500 hover:bg-yellow-400 text-black font-bold text-xs sm:text-sm border-2 border-white cursor-pointer active:translate-y-0.5"
         >
           LAUNCH [SPACE]
         </button>
         <button
           onClick={() => { stateRef.current.paddleX = Math.min(212, stateRef.current.paddleX + 25); }}
-          className="px-5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border-2 border-slate-600 text-xs cursor-pointer active:bg-slate-600"
+          className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border-2 border-slate-600 text-xs sm:text-sm cursor-pointer active:bg-slate-600"
         >
           RIGHT ▶
         </button>
       </div>
-      <p className="text-[9px] text-slate-400 mt-2 text-center">
+      <p className="text-[10px] sm:text-xs text-slate-400 mt-2 text-center">
         No extra lives • Every brick hit increases ball velocity!
       </p>
     </div>

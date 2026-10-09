@@ -7,8 +7,10 @@ interface Game2048Props {
 }
 
 const TARGET_TILE = 256;
-const TILE_SIZE = 48;
-const GAP = 8;
+const TILE_SIZE = 64;
+const GAP = 10;
+const BOARD_PADDING = 12;
+const BOARD_INNER_SIZE = TILE_SIZE * 4 + GAP * 3 + BOARD_PADDING * 2; // 310
 
 interface TileItem {
   id: number;
@@ -39,6 +41,7 @@ export const Game2048: React.FC<Game2048Props> = ({ onSuccess }) => {
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const particlesRef = useRef<Particle[]>([]);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
   function initTiles(): TileItem[] {
     const list: TileItem[] = [];
@@ -94,7 +97,7 @@ export const Game2048: React.FC<Game2048Props> = ({ onSuccess }) => {
 
     let animId: number;
     const loop = () => {
-      ctx.clearRect(0, 0, 240, 240);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
       for (let i = particlesRef.current.length - 1; i >= 0; i--) {
         const p = particlesRef.current[i];
@@ -202,8 +205,8 @@ export const Game2048: React.FC<Game2048Props> = ({ onSuccess }) => {
 
             if (item.merged) {
               // Spawn merge particles
-              const px = targetC * (TILE_SIZE + GAP) + TILE_SIZE / 2;
-              const py = targetR * (TILE_SIZE + GAP) + TILE_SIZE / 2;
+              const px = BOARD_PADDING + targetC * (TILE_SIZE + GAP) + TILE_SIZE / 2;
+              const py = BOARD_PADDING + targetR * (TILE_SIZE + GAP) + TILE_SIZE / 2;
               spawnParticles(px, py, '#facc15', 18, 4.2);
               sounds.playKanaObtained();
             }
@@ -241,10 +244,11 @@ export const Game2048: React.FC<Game2048Props> = ({ onSuccess }) => {
         } else {
           // Wall impact sparks
           sounds.playBlip(320);
-          if (dir === 'left') spawnParticles(10, 116, '#ef4444', 10, 2.5);
-          if (dir === 'right') spawnParticles(222, 116, '#ef4444', 10, 2.5);
-          if (dir === 'up') spawnParticles(116, 10, '#ef4444', 10, 2.5);
-          if (dir === 'down') spawnParticles(116, 222, '#ef4444', 10, 2.5);
+          const mid = BOARD_INNER_SIZE / 2;
+          if (dir === 'left') spawnParticles(12, mid, '#ef4444', 12, 2.5);
+          if (dir === 'right') spawnParticles(BOARD_INNER_SIZE - 12, mid, '#ef4444', 12, 2.5);
+          if (dir === 'up') spawnParticles(mid, 12, '#ef4444', 12, 2.5);
+          if (dir === 'down') spawnParticles(mid, BOARD_INNER_SIZE - 12, '#ef4444', 12, 2.5);
         }
 
         // Check Game Over
@@ -326,33 +330,60 @@ export const Game2048: React.FC<Game2048Props> = ({ onSuccess }) => {
   };
 
   return (
-    <div className="flex flex-col items-center select-none font-pixel w-full max-w-xs">
-      <div className="flex justify-between items-center w-full mb-2 text-xs">
-        <span className="text-amber-400">SCORE: {score}</span>
-        <span className="text-yellow-300 font-mono text-[10px]">GOAL: {TARGET_TILE} TILE</span>
-        <span className="text-cyan-400">MAX: {maxTile}</span>
+    <div className="flex flex-col items-center select-none font-pixel w-full max-w-[500px]">
+      {/* Score Header */}
+      <div className="flex justify-between items-center w-full max-w-[340px] mb-3 text-xs sm:text-sm">
+        <span className="text-amber-400 font-bold">SCORE: {score}</span>
+        <span className="text-yellow-300 font-mono text-[10px] sm:text-xs">GOAL: {TARGET_TILE} TILE</span>
+        <span className="text-cyan-400 font-bold">MAX: {maxTile}</span>
       </div>
 
-      <div className="relative bg-[#bbada0] p-2 rounded-lg border-4 border-slate-700 shadow-2xl">
+      {/* Board (Native DOM Flow, zero scale transform, zero overlap) */}
+      <div
+        className="relative bg-[#bbada0] p-2.5 rounded-lg border-4 border-slate-700 shadow-2xl touch-none select-none my-1"
+        onTouchStart={(e) => {
+          const t = e.touches[0];
+          if (t) touchStartRef.current = { x: t.clientX, y: t.clientY };
+        }}
+        onTouchEnd={(e) => {
+          if (!touchStartRef.current) return;
+          const t = e.changedTouches[0];
+          if (!t) return;
+          const dx = t.clientX - touchStartRef.current.x;
+          const dy = t.clientY - touchStartRef.current.y;
+          touchStartRef.current = null;
+          if (Math.hypot(dx, dy) < 20) return;
+          if (Math.abs(dx) > Math.abs(dy)) {
+            move(dx > 0 ? 'right' : 'left');
+          } else {
+            move(dy > 0 ? 'down' : 'up');
+          }
+        }}
+      >
         <canvas
           ref={canvasRef}
-          width={232}
-          height={232}
+          width={BOARD_INNER_SIZE}
+          height={BOARD_INNER_SIZE}
           className="absolute inset-0 pointer-events-none z-30"
         />
 
         {/* 4x4 Background Grid Slots */}
-        <div className="relative w-[232px] h-[232px] bg-[#cdc1b4] p-2 rounded-md overflow-hidden">
+        <div
+          className="relative bg-[#cdc1b4] rounded-md overflow-hidden"
+          style={{ width: `${BOARD_INNER_SIZE}px`, height: `${BOARD_INNER_SIZE}px` }}
+        >
           {Array.from({ length: 16 }).map((_, i) => {
             const r = Math.floor(i / 4);
             const c = i % 4;
             return (
               <div
                 key={i}
-                className="absolute w-12 h-12 rounded bg-[#cdc1b4]/40"
+                className="absolute rounded bg-[#cdc1b4]/40"
                 style={{
-                  left: `${c * (TILE_SIZE + GAP)}px`,
-                  top: `${r * (TILE_SIZE + GAP)}px`,
+                  left: `${BOARD_PADDING + c * (TILE_SIZE + GAP)}px`,
+                  top: `${BOARD_PADDING + r * (TILE_SIZE + GAP)}px`,
+                  width: `${TILE_SIZE}px`,
+                  height: `${TILE_SIZE}px`,
                 }}
               />
             );
@@ -362,10 +393,14 @@ export const Game2048: React.FC<Game2048Props> = ({ onSuccess }) => {
           {tiles.map((tile) => (
             <div
               key={tile.id}
-              className={`absolute w-12 h-12 rounded flex items-center justify-center font-bold text-base shadow-sm ${getTileStyle(
+              className={`absolute rounded flex items-center justify-center font-bold text-lg sm:text-xl shadow-sm ${getTileStyle(
                 tile.val
               )}`}
               style={{
+                left: `${BOARD_PADDING}px`,
+                top: `${BOARD_PADDING}px`,
+                width: `${TILE_SIZE}px`,
+                height: `${TILE_SIZE}px`,
                 transform: `translate(${tile.c * (TILE_SIZE + GAP)}px, ${tile.r * (TILE_SIZE + GAP)}px)`,
                 transition: 'transform 130ms cubic-bezier(0.25, 1, 0.5, 1)',
               }}
@@ -378,7 +413,7 @@ export const Game2048: React.FC<Game2048Props> = ({ onSuccess }) => {
         {won && (
           <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center rounded-lg border-2 border-emerald-400 p-4 animate-in fade-in z-40">
             <span className="text-emerald-400 text-sm mb-1 font-bold">★ 256 TILE FORGED! ★</span>
-            <span className="text-[10px] text-slate-300 mb-3">Mathematical synthesis complete!</span>
+            <span className="text-[10px] text-slate-300 mb-3 text-center">Mathematical synthesis complete!</span>
             <button
               onClick={() => onSuccess()}
               className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold border-2 border-white cursor-pointer shadow-lg"
@@ -390,7 +425,7 @@ export const Game2048: React.FC<Game2048Props> = ({ onSuccess }) => {
 
         {gameOver && !won && (
           <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center rounded-lg border-2 border-red-500 p-4 z-40">
-            <span className="text-red-400 text-xs mb-3">NO MOVES REMAINING</span>
+            <span className="text-red-400 text-xs mb-3 font-bold">NO MOVES REMAINING</span>
             <button
               onClick={restart}
               className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white text-[10px] border-2 border-white cursor-pointer"
@@ -401,36 +436,37 @@ export const Game2048: React.FC<Game2048Props> = ({ onSuccess }) => {
         )}
       </div>
 
-      <div className="grid grid-cols-3 gap-1.5 mt-3 w-44">
+      {/* D-Pad Buttons */}
+      <div className="grid grid-cols-3 gap-2 mt-3.5 w-52 sm:w-60">
         <div />
         <button
           onClick={() => move('up')}
-          className="p-2 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-200 border border-slate-600 text-xs cursor-pointer flex justify-center"
+          className="h-11 sm:h-12 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-200 border-2 border-slate-600 text-base font-bold cursor-pointer flex items-center justify-center rounded active:scale-95 transition-transform"
         >
           ▲
         </button>
         <div />
         <button
           onClick={() => move('left')}
-          className="p-2 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-200 border border-slate-600 text-xs cursor-pointer flex justify-center"
+          className="h-11 sm:h-12 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-200 border-2 border-slate-600 text-base font-bold cursor-pointer flex items-center justify-center rounded active:scale-95 transition-transform"
         >
           ◀
         </button>
         <button
           onClick={() => move('down')}
-          className="p-2 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-200 border border-slate-600 text-xs cursor-pointer flex justify-center"
+          className="h-11 sm:h-12 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-200 border-2 border-slate-600 text-base font-bold cursor-pointer flex items-center justify-center rounded active:scale-95 transition-transform"
         >
           ▼
         </button>
         <button
           onClick={() => move('right')}
-          className="p-2 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-200 border border-slate-600 text-xs cursor-pointer flex justify-center"
+          className="h-11 sm:h-12 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-200 border-2 border-slate-600 text-base font-bold cursor-pointer flex items-center justify-center rounded active:scale-95 transition-transform"
         >
           ▶
         </button>
       </div>
-      <p className="text-[9px] text-slate-400 mt-2 text-center">
-        Arrow Keys [W/A/S/D] • True sliding block animations • Reach 256!
+      <p className="text-[10px] sm:text-xs text-slate-400 mt-2 text-center">
+        Arrow Keys [W/A/S/D] or D-Pad • Reach 256!
       </p>
     </div>
   );

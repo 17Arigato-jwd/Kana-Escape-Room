@@ -34,6 +34,65 @@
       inset 4px 4px 0px 0px rgba(252, 165, 165, 0.4),
       0px 0px 0px 4px #1c1917;
   }
+  .pixel-box-vermillion {
+    box-shadow: 
+      inset -4px -4px 0px 0px rgba(127, 29, 29, 0.9),
+      inset 4px 4px 0px 0px rgba(248, 113, 113, 0.6),
+      0px 0px 0px 4px #1a0808;
+  }
+  .pixel-box-cedar {
+    box-shadow: 
+      inset -4px -4px 0px 0px rgba(120, 53, 15, 0.9),
+      inset 4px 4px 0px 0px rgba(245, 158, 11, 0.6),
+      0px 0px 0px 4px #17120e;
+  }
+
+  /* Traditional Japanese Patterns (和柄 - Wagara) */
+  /* Room 1: Ichimatsu (市松模様 - Retro Cyber Checkerboard) */
+  .wagara-ichimatsu {
+    background-color: #0f0e21;
+    background-image: 
+      linear-gradient(45deg, #1c1a3b 25%, transparent 25%), 
+      linear-gradient(-45deg, #1c1a3b 25%, transparent 25%), 
+      linear-gradient(45deg, transparent 75%, #1c1a3b 75%), 
+      linear-gradient(-45deg, transparent 75%, #1c1a3b 75%);
+    background-size: 16px 16px;
+    background-position: 0 0, 0 8px, 8px -8px, -8px 0px;
+  }
+
+  /* Room 2: Asanoha / Bamboo Lattice (麻の葉・格子 - Cedar Wood Library) */
+  .wagara-asanoha {
+    background-color: #17120e;
+    background-image: 
+      radial-gradient(#b45309 1px, transparent 1px), 
+      radial-gradient(#d97706 1px, #17120e 1px);
+    background-size: 16px 16px;
+    background-position: 0 0, 8px 8px;
+  }
+
+  /* Room 3: Seigaiha (青海波 - Sacred Shrine Wave) */
+  .wagara-seigaiha {
+    background-color: #18080a;
+    background-image: 
+      radial-gradient(circle at 50% 100%, transparent 6px, #7f1d1d 7px, #7f1d1d 8px, transparent 9px),
+      radial-gradient(circle at 50% 100%, transparent 12px, #b91c1c 13px, #b91c1c 14px, transparent 15px);
+    background-size: 28px 14px;
+  }
+
+  /* Red Ink Japanese Hanko Seal Stamp (印鑑・落款) */
+  .hanko-stamp {
+    border: 3px solid #dc2626;
+    color: #dc2626;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transform: rotate(-7deg);
+    font-family: 'DotGothic16', sans-serif;
+    font-weight: bold;
+    text-shadow: 0 0 2px rgba(220, 38, 38, 0.6);
+    box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.25), inset 0 0 4px rgba(220, 38, 38, 0.3);
+  }
 }
 
 /* Custom scrollbars for retro styling */

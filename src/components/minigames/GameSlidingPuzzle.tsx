@@ -136,13 +136,13 @@ export const GameSlidingPuzzle: React.FC<GameSlidingPuzzleProps> = ({ onSuccess 
   };
 
   return (
-    <div className="flex flex-col items-center select-none font-pixel w-full max-w-xs">
-      <div className="flex justify-between items-center w-full mb-2 text-xs">
-        <span className="text-amber-400">MOVES: {moves}</span>
+    <div className="flex flex-col items-center select-none font-pixel w-full max-w-[500px]">
+      <div className="flex justify-between items-center w-full mb-2 text-xs sm:text-sm">
+        <span className="text-amber-400 font-bold">MOVES: {moves}</span>
         <button
           onClick={handleGetHint}
           disabled={hintCooldown > 0 || won}
-          className={`px-3 py-1 border text-[10px] cursor-pointer transition-all ${
+          className={`px-3 py-1 sm:px-4 sm:py-1.5 border text-xs sm:text-sm font-bold cursor-pointer transition-all rounded ${
             hintCooldown > 0
               ? 'bg-slate-800 text-slate-500 border-slate-700 cursor-not-allowed'
               : 'bg-cyan-900/60 hover:bg-cyan-700 text-cyan-300 border-cyan-500 shadow-sm'
@@ -152,8 +152,8 @@ export const GameSlidingPuzzle: React.FC<GameSlidingPuzzleProps> = ({ onSuccess 
         </button>
       </div>
 
-      <div className="bg-slate-950 p-3 border-4 border-slate-700 shadow-2xl relative">
-        <div className="grid grid-cols-4 gap-1.5 w-60 h-60 bg-slate-900 border border-slate-800 p-1.5">
+      <div className="bg-slate-950 p-3 sm:p-5 border-4 border-slate-700 shadow-2xl relative w-full flex flex-col items-center">
+        <div className="grid grid-cols-4 gap-2 sm:gap-2.5 w-72 h-72 sm:w-84 sm:h-84 md:w-96 md:h-96 bg-slate-900 border border-slate-800 p-2 sm:p-3 rounded">
           {tiles.map((val, idx) => {
             const isEmpty = val === 0;
             const isHint = hintIndex === idx;
@@ -163,7 +163,7 @@ export const GameSlidingPuzzle: React.FC<GameSlidingPuzzleProps> = ({ onSuccess 
                 key={idx}
                 onClick={() => handleTileClick(idx)}
                 disabled={isEmpty || won}
-                className={`w-13 h-13 border-2 flex items-center justify-center font-bold text-sm transition-all cursor-pointer relative ${
+                className={`w-full h-full aspect-square border-2 flex items-center justify-center font-bold text-base sm:text-xl md:text-2xl transition-all cursor-pointer relative rounded ${
                   isEmpty
                     ? 'bg-slate-950/60 border-slate-800'
                     : isHint
@@ -178,12 +178,12 @@ export const GameSlidingPuzzle: React.FC<GameSlidingPuzzleProps> = ({ onSuccess 
         </div>
 
         {won && (
-          <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center border-2 border-emerald-400 p-4 animate-in fade-in">
-            <span className="text-emerald-400 text-sm mb-1 font-bold">★ TOME SHELF SOLVED! ★</span>
-            <span className="text-[10px] text-slate-300 mb-3">All 15 tiles ordered into alignment!</span>
+          <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center border-2 border-emerald-400 p-4 animate-in fade-in z-20">
+            <span className="text-emerald-400 text-base sm:text-lg mb-2 font-bold">★ TOME SHELF SOLVED! ★</span>
+            <span className="text-xs sm:text-sm text-slate-300 mb-4 text-center">All 15 tiles ordered into alignment!</span>
             <button
               onClick={() => onSuccessRef.current()}
-              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold border-2 border-white cursor-pointer shadow-lg"
+              className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black text-xs sm:text-sm font-bold border-2 border-white cursor-pointer shadow-lg"
             >
               CLAIM REWARD NOW
             </button>
@@ -191,7 +191,7 @@ export const GameSlidingPuzzle: React.FC<GameSlidingPuzzleProps> = ({ onSuccess 
         )}
       </div>
 
-      <p className="text-[9px] text-slate-400 mt-2 text-center">
+      <p className="text-[10px] sm:text-xs text-slate-400 mt-3 text-center">
         Randomized 15-puzzle • Slide tiles into order 1 to 15 • Use 💡 Hint if stuck!
       </p>
     </div>

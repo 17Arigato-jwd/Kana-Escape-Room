@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { sounds } from '../../utils/audio';
 
 interface GameAngryBirdsProps {
@@ -177,25 +177,14 @@ export const GameAngryBirds: React.FC<GameAngryBirdsProps> = ({ onSuccess }) => 
     return () => cancelAnimationFrame(animId);
   }, []);
 
-  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (stateRef.current.projectile.active || won || gameOver) return;
-    stateRef.current.dragging = true;
-    updateDrag(e);
-  };
-
-  const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!stateRef.current.dragging) return;
-    updateDrag(e);
-  };
-
-  const updateDrag = (e: React.MouseEvent<HTMLCanvasElement>) => {
+  const updateDragFromCoords = (clientX: number, clientY: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
     const scaleX = canvas.width / rect.width;
     const scaleY = canvas.height / rect.height;
-    const mx = (e.clientX - rect.left) * scaleX;
-    const my = (e.clientY - rect.top) * scaleY;
+    const mx = (clientX - rect.left) * scaleX;
+    const my = (clientY - rect.top) * scaleY;
 
     // Constrain pull distance
     const dx = mx - stateRef.current.slingX;
@@ -212,7 +201,21 @@ export const GameAngryBirds: React.FC<GameAngryBirdsProps> = ({ onSuccess }) => 
     }
   };
 
-  const handleMouseUp = () => {
+  const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    if (stateRef.current.projectile.active || won || gameOver) return;
+    stateRef.current.dragging = true;
+    updateDragFromCoords(e.clientX, e.clientY);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (stateRef.current.projectile.active || won || gameOver) return;
+    const touch = e.touches[0];
+    if (!touch) return;
+    stateRef.current.dragging = true;
+    updateDragFromCoords(touch.clientX, touch.clientY);
+  };
+
+  const handleRelease = useCallback(() => {
     const s = stateRef.current;
     if (!s.dragging) return;
     s.dragging = false;
@@ -227,33 +230,65 @@ export const GameAngryBirds: React.FC<GameAngryBirdsProps> = ({ onSuccess }) => 
     s.projectile.vy = pVy;
     s.projectile.active = true;
     sounds.playBlip(620);
-  };
+  }, []);
+
+  // Global window listeners so releasing outside canvas launches cleanly
+  useEffect(() => {
+    const onWindowMove = (e: MouseEvent) => {
+      if (stateRef.current.dragging) {
+        updateDragFromCoords(e.clientX, e.clientY);
+      }
+    };
+    const onWindowTouchMove = (e: TouchEvent) => {
+      if (stateRef.current.dragging && e.touches[0]) {
+        updateDragFromCoords(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    };
+    const onWindowUp = () => {
+      if (stateRef.current.dragging) {
+        handleRelease();
+      }
+    };
+
+    window.addEventListener('mousemove', onWindowMove);
+    window.addEventListener('mouseup', onWindowUp);
+    window.addEventListener('touchmove', onWindowTouchMove, { passive: true });
+    window.addEventListener('touchend', onWindowUp);
+    window.addEventListener('touchcancel', onWindowUp);
+
+    return () => {
+      window.removeEventListener('mousemove', onWindowMove);
+      window.removeEventListener('mouseup', onWindowUp);
+      window.removeEventListener('touchmove', onWindowTouchMove);
+      window.removeEventListener('touchend', onWindowUp);
+      window.removeEventListener('touchcancel', onWindowUp);
+    };
+  }, [handleRelease]);
 
   return (
-    <div className="flex flex-col items-center select-none font-pixel w-full max-w-xs">
-      <div className="flex justify-between items-center w-full mb-2 text-xs">
-        <span className="text-cyan-400">AMMO: {'🔴'.repeat(shotsLeft)}</span>
-        <span className="text-rose-400">TARGETS: {targetsLeft}</span>
+    <div className="flex flex-col items-center select-none font-pixel w-full max-w-[580px]">
+      <div className="flex justify-between items-center w-full mb-2 text-xs sm:text-sm px-1">
+        <span className="text-cyan-400 font-bold">AMMO: {'🔴'.repeat(shotsLeft)}</span>
+        <span className="text-rose-400 font-bold">TARGETS: {targetsLeft}</span>
       </div>
 
-      <div className="relative border-4 border-slate-700 shadow-2xl bg-black cursor-crosshair">
+      <div className="relative border-4 border-slate-700 shadow-2xl bg-black cursor-crosshair touch-none w-full flex justify-center overflow-hidden">
         <canvas
           ref={canvasRef}
           width={260}
           height={200}
           onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          className="pixelated block"
+          onTouchStart={handleTouchStart}
+          className="pixelated block touch-none w-full max-w-[560px] aspect-[260/200] object-contain"
         />
 
         {won && (
           <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center border-2 border-emerald-400 p-4 animate-in fade-in">
-            <span className="text-emerald-400 text-sm mb-1 font-bold">★ FORTRESS TOPPLED! ★</span>
-            <span className="text-[10px] text-slate-300 mb-3">All target blocks obliterated!</span>
+            <span className="text-emerald-400 text-sm sm:text-base mb-1 font-bold">★ FORTRESS TOPPLED! ★</span>
+            <span className="text-xs text-slate-300 mb-3">All target blocks obliterated!</span>
             <button
               onClick={() => onSuccessRef.current()}
-              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold border-2 border-white cursor-pointer"
+              className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black text-xs sm:text-sm font-bold border-2 border-white cursor-pointer active:translate-y-0.5 shadow-lg"
             >
               CLAIM REWARD NOW
             </button>
@@ -262,10 +297,10 @@ export const GameAngryBirds: React.FC<GameAngryBirdsProps> = ({ onSuccess }) => 
 
         {gameOver && !won && (
           <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center border-2 border-red-500 p-4">
-            <span className="text-red-400 text-xs mb-3">OUT OF SHOTS</span>
+            <span className="text-red-400 text-sm sm:text-base mb-3 font-bold">OUT OF SHOTS</span>
             <button
               onClick={restart}
-              className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white text-[10px] border-2 border-white cursor-pointer"
+              className="px-5 py-2 bg-red-600 hover:bg-red-500 text-white text-xs border-2 border-white cursor-pointer active:translate-y-0.5"
             >
               TRY AGAIN
             </button>
@@ -273,7 +308,7 @@ export const GameAngryBirds: React.FC<GameAngryBirdsProps> = ({ onSuccess }) => 
         )}
       </div>
 
-      <p className="text-[9px] text-slate-400 mt-2 text-center">
+      <p className="text-[10px] sm:text-xs text-slate-400 mt-2 text-center">
         Click and drag back the slingshot to aim trajectory, release to fire!
       </p>
     </div>

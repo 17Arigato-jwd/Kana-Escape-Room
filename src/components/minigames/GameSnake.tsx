@@ -23,6 +23,9 @@ export const GameSnake: React.FC<GameSnakeProps> = ({ onSuccess, targetFood = 10
 
   const dirRef = useRef(direction);
   dirRef.current = direction;
+  const inputQueueRef = useRef<('UP' | 'DOWN' | 'LEFT' | 'RIGHT')[]>([]);
+
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
 
   const spawnFood = (currentSnake: { x: number; y: number }[]) => {
     let newPos: { x: number; y: number };
@@ -46,8 +49,10 @@ export const GameSnake: React.FC<GameSnakeProps> = ({ onSuccess, targetFood = 10
       { x: 4, y: 6 },
       { x: 3, y: 6 }
     ];
+    inputQueueRef.current = [];
     setSnake(initialSnake);
     setDirection('RIGHT');
+    dirRef.current = 'RIGHT';
     setFood(spawnFood(initialSnake));
   };
 
@@ -64,13 +69,25 @@ export const GameSnake: React.FC<GameSnakeProps> = ({ onSuccess, targetFood = 10
     }
   }, [score, targetFood, won, onSuccess]);
 
-  const changeDirection = useCallback((newDir: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT') => {
-    const cur = dirRef.current;
-    if (newDir === 'UP' && cur !== 'DOWN') setDirection('UP');
-    if (newDir === 'DOWN' && cur !== 'UP') setDirection('DOWN');
-    if (newDir === 'LEFT' && cur !== 'RIGHT') setDirection('LEFT');
-    if (newDir === 'RIGHT' && cur !== 'LEFT') setDirection('RIGHT');
+  const isOpposite = (d1: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT', d2: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT') => {
+    return (
+      (d1 === 'UP' && d2 === 'DOWN') ||
+      (d1 === 'DOWN' && d2 === 'UP') ||
+      (d1 === 'LEFT' && d2 === 'RIGHT') ||
+      (d1 === 'RIGHT' && d2 === 'LEFT')
+    );
+  };
+
+  const queueDirection = useCallback((newDir: 'UP' | 'DOWN' | 'LEFT' | 'RIGHT') => {
+    const queue = inputQueueRef.current;
+    const lastDir = queue.length > 0 ? queue[queue.length - 1] : dirRef.current;
+
+    if (newDir !== lastDir && !isOpposite(newDir, lastDir) && queue.length < 2) {
+      queue.push(newDir);
+    }
   }, []);
+
+  const changeDirection = queueDirection;
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -99,6 +116,13 @@ export const GameSnake: React.FC<GameSnakeProps> = ({ onSuccess, targetFood = 10
 
     const interval = setInterval(() => {
       setSnake((prevSnake) => {
+        // Dequeue next direction if available
+        if (inputQueueRef.current.length > 0) {
+          const next = inputQueueRef.current.shift()!;
+          dirRef.current = next;
+          setDirection(next);
+        }
+
         const head = { ...prevSnake[0] };
         const curDir = dirRef.current;
 
@@ -139,32 +163,50 @@ export const GameSnake: React.FC<GameSnakeProps> = ({ onSuccess, targetFood = 10
     return () => clearInterval(interval);
   }, [gameOver, won, food, score]);
 
+  // O(1) fast position lookup for rendering
+  const bodySet = new Set(snake.slice(1).map((s) => `${s.x},${s.y}`));
+  const headPos = snake[0];
+
   return (
-    <div className="flex flex-col items-center select-none font-pixel">
-      <div className="flex justify-between items-center w-72 mb-2 text-xs">
-        <span className="text-emerald-400">APPLES: {score}/{targetFood}</span>
-        <span className="text-amber-300 text-[10px]">FEED SERPENT</span>
+    <div className="flex flex-col items-center select-none font-pixel w-full max-w-[500px]">
+      <div className="flex justify-between items-center w-full mb-2 text-xs sm:text-sm">
+        <span className="text-emerald-400 font-bold">APPLES: {score}/{targetFood}</span>
+        <span className="text-amber-300 text-xs font-mono">FEED SERPENT</span>
       </div>
 
-      <div className="relative bg-slate-950 p-2 border-4 border-slate-700 shadow-2xl">
-        <div
-          className="grid gap-0.5 bg-slate-900 border-2 border-slate-800"
-          style={{
-            gridTemplateColumns: `repeat(${GRID_SIZE}, 1.25rem)`,
-            gridTemplateRows: `repeat(${GRID_SIZE}, 1.25rem)`
-          }}
-        >
+      <div
+        className="relative bg-slate-950 p-3 sm:p-5 border-4 border-slate-700 shadow-2xl touch-none flex flex-col items-center w-full"
+        onTouchStart={(e) => {
+          const t = e.touches[0];
+          if (t) touchStartRef.current = { x: t.clientX, y: t.clientY };
+        }}
+        onTouchEnd={(e) => {
+          if (!touchStartRef.current) return;
+          const t = e.changedTouches[0];
+          if (!t) return;
+          const dx = t.clientX - touchStartRef.current.x;
+          const dy = t.clientY - touchStartRef.current.y;
+          touchStartRef.current = null;
+          if (Math.hypot(dx, dy) < 18) return;
+          if (Math.abs(dx) > Math.abs(dy)) {
+            changeDirection(dx > 0 ? 'RIGHT' : 'LEFT');
+          } else {
+            changeDirection(dy > 0 ? 'DOWN' : 'UP');
+          }
+        }}
+      >
+        <div className="grid grid-cols-12 gap-0.5 bg-slate-900 border-2 border-slate-800 p-1 w-72 h-72 sm:w-84 sm:h-84 md:w-96 md:h-96 rounded">
           {Array.from({ length: GRID_SIZE * GRID_SIZE }).map((_, idx) => {
             const x = idx % GRID_SIZE;
             const y = Math.floor(idx / GRID_SIZE);
-            const isHead = snake[0].x === x && snake[0].y === y;
-            const isBody = snake.slice(1).some((s) => s.x === x && s.y === y);
+            const isHead = headPos && headPos.x === x && headPos.y === y;
+            const isBody = !isHead && bodySet.has(`${x},${y}`);
             const isFood = food.x === x && food.y === y;
 
             return (
               <div
                 key={idx}
-                className={`w-5 h-5 flex items-center justify-center ${
+                className={`w-full h-full aspect-square flex items-center justify-center rounded-[1px] ${
                   isHead
                     ? 'bg-emerald-400 border border-white'
                     : isBody
@@ -176,19 +218,19 @@ export const GameSnake: React.FC<GameSnakeProps> = ({ onSuccess, targetFood = 10
                     : 'bg-slate-850'
                 }`}
               >
-                {isHead && <div className="w-1 h-1 bg-black rounded-full" />}
+                {isHead && <div className="w-1.5 h-1.5 sm:w-2 sm:h-2 bg-black rounded-full" />}
               </div>
             );
           })}
         </div>
 
         {won && (
-          <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center border-2 border-emerald-400 p-3 animate-in fade-in duration-200">
-            <span className="text-emerald-400 text-sm mb-1 font-bold">★ SERPENT SATED! ★</span>
-            <span className="text-[10px] text-slate-300 mb-3">Collected {score} apples!</span>
+          <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center border-2 border-emerald-400 p-4 animate-in fade-in duration-200 z-20">
+            <span className="text-emerald-400 text-base sm:text-lg mb-2 font-bold">★ SERPENT SATED! ★</span>
+            <span className="text-xs sm:text-sm text-slate-300 mb-4 text-center">Collected {score} apples!</span>
             <button
               onClick={() => onSuccess()}
-              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold border-2 border-white cursor-pointer active:translate-y-0.5 shadow-lg"
+              className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black text-xs sm:text-sm font-bold border-2 border-white cursor-pointer active:translate-y-0.5 shadow-lg"
             >
               CLAIM REWARD NOW
             </button>
@@ -196,11 +238,11 @@ export const GameSnake: React.FC<GameSnakeProps> = ({ onSuccess, targetFood = 10
         )}
 
         {gameOver && !won && (
-          <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center border-2 border-red-500">
-            <span className="text-red-400 text-xs mb-3">SERPENT CRASHED!</span>
+          <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center border-2 border-red-500 p-4 z-20">
+            <span className="text-red-400 text-sm sm:text-base mb-3 font-bold">SERPENT CRASHED!</span>
             <button
               onClick={restart}
-              className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white text-[10px] border-2 border-white cursor-pointer active:translate-y-0.5"
+              className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-xs sm:text-sm font-bold border-2 border-white cursor-pointer active:translate-y-0.5"
             >
               RESTART
             </button>
@@ -209,35 +251,35 @@ export const GameSnake: React.FC<GameSnakeProps> = ({ onSuccess, targetFood = 10
       </div>
 
       {/* D-Pad Buttons */}
-      <div className="mt-3 flex flex-col items-center gap-1">
+      <div className="mt-3 flex flex-col items-center gap-1.5">
         <button
           onClick={() => changeDirection('UP')}
-          className="w-12 h-8 bg-slate-800 hover:bg-slate-700 text-slate-200 border-2 border-slate-600 text-xs cursor-pointer active:bg-slate-600"
+          className="w-14 h-9 sm:w-16 sm:h-10 bg-slate-800 hover:bg-slate-700 text-slate-200 border-2 border-slate-600 text-xs sm:text-sm font-bold cursor-pointer active:bg-slate-600 rounded"
         >
           ▲
         </button>
         <div className="flex gap-2">
           <button
             onClick={() => changeDirection('LEFT')}
-            className="w-12 h-8 bg-slate-800 hover:bg-slate-700 text-slate-200 border-2 border-slate-600 text-xs cursor-pointer active:bg-slate-600"
+            className="w-14 h-9 sm:w-16 sm:h-10 bg-slate-800 hover:bg-slate-700 text-slate-200 border-2 border-slate-600 text-xs sm:text-sm font-bold cursor-pointer active:bg-slate-600 rounded"
           >
             ◀
           </button>
           <button
             onClick={() => changeDirection('DOWN')}
-            className="w-12 h-8 bg-slate-800 hover:bg-slate-700 text-slate-200 border-2 border-slate-600 text-xs cursor-pointer active:bg-slate-600"
+            className="w-14 h-9 sm:w-16 sm:h-10 bg-slate-800 hover:bg-slate-700 text-slate-200 border-2 border-slate-600 text-xs sm:text-sm font-bold cursor-pointer active:bg-slate-600 rounded"
           >
             ▼
           </button>
           <button
             onClick={() => changeDirection('RIGHT')}
-            className="w-12 h-8 bg-slate-800 hover:bg-slate-700 text-slate-200 border-2 border-slate-600 text-xs cursor-pointer active:bg-slate-600"
+            className="w-14 h-9 sm:w-16 sm:h-10 bg-slate-800 hover:bg-slate-700 text-slate-200 border-2 border-slate-600 text-xs sm:text-sm font-bold cursor-pointer active:bg-slate-600 rounded"
           >
             ▶
           </button>
         </div>
       </div>
-      <p className="text-[10px] text-slate-400 mt-2">Arrow Keys / WASD or D-Pad</p>
+      <p className="text-[10px] sm:text-xs text-slate-400 mt-2">Arrow Keys / WASD or D-Pad</p>
     </div>
   );
 };

@@ -71,6 +71,7 @@ export const GameLaneRunner: React.FC<GameLaneRunnerProps> = ({ onSuccess, targe
 
     let animId: number;
     let spawnCounter = 0;
+    let lastHudTime = 0;
 
     const loop = () => {
       const s = stateRef.current;
@@ -81,8 +82,13 @@ export const GameLaneRunner: React.FC<GameLaneRunnerProps> = ({ onSuccess, targe
         const currentSpeed = 3.2 + progress * 4.6;
         s.distance += 0.2 + progress * 0.25;
 
-        setDistance(Math.floor(s.distance));
-        setSpeedVal(`${(currentSpeed / 3.2).toFixed(1)}x`);
+        // Throttle React state updates to 10Hz instead of 60Hz to save CPU
+        const now = performance.now();
+        if (now - lastHudTime > 100) {
+          lastHudTime = now;
+          setDistance(Math.floor(s.distance));
+          setSpeedVal(`${(currentSpeed / 3.2).toFixed(1)}x`);
+        }
 
         // Smooth lane interpolation
         const targetX = s.laneX[s.lane];
@@ -184,22 +190,50 @@ export const GameLaneRunner: React.FC<GameLaneRunnerProps> = ({ onSuccess, targe
   }, []);
 
   return (
-    <div className="flex flex-col items-center select-none font-pixel w-full max-w-xs">
-      <div className="flex justify-between items-center w-full mb-2 text-xs">
-        <span className="text-cyan-400">DISTANCE: {distance}m / {targetMeters}m</span>
-        <span className="text-yellow-400 font-mono text-[10px]">SPEED: {speedVal}</span>
+    <div className="flex flex-col items-center select-none font-pixel w-full max-w-[580px]">
+      <div className="flex justify-between items-center w-full mb-2 text-xs sm:text-sm px-1">
+        <span className="text-cyan-400 font-bold">DISTANCE: {distance}m / {targetMeters}m</span>
+        <span className="text-yellow-400 font-mono text-[10px] sm:text-xs">SPEED: {speedVal}</span>
       </div>
 
-      <div className="relative border-4 border-slate-700 shadow-2xl bg-black">
-        <canvas ref={canvasRef} width={260} height={200} className="pixelated block" />
+      <div className="relative border-4 border-slate-700 shadow-2xl bg-black touch-none w-full flex justify-center overflow-hidden">
+        <canvas
+          ref={canvasRef}
+          width={260}
+          height={200}
+          className="pixelated block touch-none cursor-pointer w-full max-w-[560px] aspect-[260/200] object-contain"
+          onTouchStart={(e) => {
+            const touch = e.touches[0];
+            if (touch && canvasRef.current) {
+              const rect = canvasRef.current.getBoundingClientRect();
+              const relX = touch.clientX - rect.left;
+              if (relX < rect.width * 0.45) {
+                changeLane(-1);
+              } else if (relX > rect.width * 0.55) {
+                changeLane(1);
+              }
+            }
+          }}
+          onClick={(e) => {
+            if (canvasRef.current) {
+              const rect = canvasRef.current.getBoundingClientRect();
+              const relX = e.clientX - rect.left;
+              if (relX < rect.width * 0.45) {
+                changeLane(-1);
+              } else if (relX > rect.width * 0.55) {
+                changeLane(1);
+              }
+            }
+          }}
+        />
 
         {won && (
           <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center border-2 border-emerald-400 p-4 animate-in fade-in">
-            <span className="text-emerald-400 text-sm mb-1 font-bold">★ RUNWAY CONQUERED! ★</span>
-            <span className="text-[10px] text-slate-300 mb-3">Survived the 250m hyper-acceleration sprint!</span>
+            <span className="text-emerald-400 text-sm sm:text-base mb-1 font-bold">★ RUNWAY CONQUERED! ★</span>
+            <span className="text-xs text-slate-300 mb-3">Survived the 250m hyper-acceleration sprint!</span>
             <button
               onClick={() => onSuccessRef.current()}
-              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold border-2 border-white cursor-pointer"
+              className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black text-xs sm:text-sm font-bold border-2 border-white cursor-pointer active:translate-y-0.5 shadow-lg"
             >
               CLAIM REWARD NOW
             </button>
@@ -208,10 +242,10 @@ export const GameLaneRunner: React.FC<GameLaneRunnerProps> = ({ onSuccess, targe
 
         {gameOver && !won && (
           <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center border-2 border-red-500 p-4">
-            <span className="text-red-400 text-xs mb-3">COLLISION DETECTED</span>
+            <span className="text-red-400 text-sm sm:text-base mb-3 font-bold">COLLISION DETECTED</span>
             <button
               onClick={restart}
-              className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white text-[10px] border-2 border-white cursor-pointer"
+              className="px-5 py-2 bg-red-600 hover:bg-red-500 text-white text-xs border-2 border-white cursor-pointer active:translate-y-0.5"
             >
               RESTART RUN
             </button>
@@ -222,18 +256,18 @@ export const GameLaneRunner: React.FC<GameLaneRunnerProps> = ({ onSuccess, targe
       <div className="flex gap-4 mt-3 w-full justify-center">
         <button
           onClick={() => changeLane(-1)}
-          className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border-2 border-slate-600 text-xs cursor-pointer active:bg-slate-600"
+          className="px-7 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border-2 border-slate-600 text-xs sm:text-sm cursor-pointer active:bg-slate-600"
         >
           ◀ LEFT LANE
         </button>
         <button
           onClick={() => changeLane(1)}
-          className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border-2 border-slate-600 text-xs cursor-pointer active:bg-slate-600"
+          className="px-7 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border-2 border-slate-600 text-xs sm:text-sm cursor-pointer active:bg-slate-600"
         >
           RIGHT LANE ▶
         </button>
       </div>
-      <p className="text-[9px] text-slate-400 mt-2">Corridor accelerates progressively! Reach 250m to escape.</p>
+      <p className="text-[10px] sm:text-xs text-slate-400 mt-2">Corridor accelerates progressively! Reach 250m to escape.</p>
     </div>
   );
 };
