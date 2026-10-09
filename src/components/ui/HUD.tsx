@@ -9,6 +9,9 @@ interface HUDProps {
   isDoorUnlocked: boolean;
   onOpenInventory: () => void;
   onOpenPauseMenu: () => void;
+  onUnlockDoor?: () => void;
+  onSelectRoomIndex?: (index: number) => void;
+  currentRoomIndex?: number;
 }
 
 export const HUD: React.FC<HUDProps> = ({
@@ -17,6 +20,9 @@ export const HUD: React.FC<HUDProps> = ({
   isDoorUnlocked,
   onOpenInventory,
   onOpenPauseMenu,
+  onUnlockDoor,
+  onSelectRoomIndex,
+  currentRoomIndex = 0,
 }) => {
   const theme = getRoomTheme(currentRoom.id);
 
@@ -50,6 +56,50 @@ export const HUD: React.FC<HUDProps> = ({
             </span>
           )}
         </div>
+      </div>
+
+      {/* Temporary Test Navigation Controls */}
+      <div className="flex items-center gap-1 sm:gap-1.5 bg-slate-950/90 px-1.5 sm:px-2 py-0.5 sm:py-1 border border-amber-500/60 shadow-inner">
+        <button
+          onClick={() => {
+            sounds.playSuccess();
+            onUnlockDoor?.();
+          }}
+          disabled={isDoorUnlocked}
+          title="Temporary test control: Unlock this room's exit door immediately"
+          className={`px-2 py-1 text-[8px] sm:text-[9px] font-pixel border rounded-xs cursor-pointer flex items-center gap-1 transition-all ${
+            isDoorUnlocked
+              ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500 cursor-default'
+              : 'bg-amber-600 hover:bg-amber-500 text-yellow-100 border-yellow-300 active:scale-95 animate-pulse'
+          }`}
+        >
+          <span>{isDoorUnlocked ? '✓' : '🔓'}</span>
+          <span className="hidden xs:inline">{isDoorUnlocked ? 'DOOR OPEN' : 'UNLOCK DOOR (TEST)'}</span>
+          <span className="xs:hidden">{isDoorUnlocked ? 'OPEN' : 'UNLOCK'}</span>
+        </button>
+
+        {onSelectRoomIndex && (
+          <div className="flex items-center gap-0.5 pl-1 border-l border-slate-700">
+            <span className="text-[7px] sm:text-[8px] text-slate-400 font-pixel mr-0.5 hidden sm:inline">WARP:</span>
+            {[0, 1, 2].map((idx) => (
+              <button
+                key={idx}
+                onClick={() => {
+                  sounds.playSelect();
+                  onSelectRoomIndex(idx);
+                }}
+                title={`Warp to Room ${idx + 1}`}
+                className={`px-1.5 py-0.5 text-[8px] sm:text-[9px] font-pixel border cursor-pointer active:scale-95 ${
+                  currentRoomIndex === idx
+                    ? 'bg-indigo-600 text-yellow-300 border-yellow-400 font-bold'
+                    : 'bg-slate-900 text-slate-400 hover:text-white border-slate-700'
+                }`}
+              >
+                R{idx + 1}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Buttons */}

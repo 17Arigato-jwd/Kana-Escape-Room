@@ -7,10 +7,32 @@ interface GameTimedCodeProps {
   codeLength?: number;
 }
 
+interface JapaneseDigitInfo {
+  digit: string;
+  kanji: string;
+  romaji: string;
+  kana: string;
+}
+
+const JAPANESE_DIGITS: Record<string, JapaneseDigitInfo> = {
+  '0': { digit: '0', kanji: '〇', romaji: 'zero', kana: 'ぜろ' },
+  '1': { digit: '1', kanji: '一', romaji: 'ichi', kana: 'いち' },
+  '2': { digit: '2', kanji: '二', romaji: 'ni', kana: 'に' },
+  '3': { digit: '3', kanji: '三', romaji: 'san', kana: 'さん' },
+  '4': { digit: '4', kanji: '四', romaji: 'yon', kana: 'よん' },
+  '5': { digit: '5', kanji: '五', romaji: 'go', kana: 'ご' },
+  '6': { digit: '6', kanji: '六', romaji: 'roku', kana: 'ろく' },
+  '7': { digit: '7', kanji: '七', romaji: 'nana', kana: 'なな' },
+  '8': { digit: '8', kanji: '八', romaji: 'hachi', kana: 'はち' },
+  '9': { digit: '9', kanji: '九', romaji: 'kyuu', kana: 'きゅう' },
+};
+
+const TOTAL_TIME = 15;
+
 export const GameTimedCode: React.FC<GameTimedCodeProps> = ({ onSuccess, codeLength = 4 }) => {
   const [targetCode, setTargetCode] = useState<string>('');
   const [enteredCode, setEnteredCode] = useState<string>('');
-  const [timeLeft, setTimeLeft] = useState<number>(12);
+  const [timeLeft, setTimeLeft] = useState<number>(TOTAL_TIME);
   const [gameOver, setGameOver] = useState<boolean>(false);
   const [won, setWon] = useState<boolean>(false);
 
@@ -28,7 +50,7 @@ export const GameTimedCode: React.FC<GameTimedCodeProps> = ({ onSuccess, codeLen
     const newCode = generateCode();
     setTargetCode(newCode);
     setEnteredCode('');
-    setTimeLeft(12);
+    setTimeLeft(TOTAL_TIME);
     setGameOver(false);
     setWon(false);
   }, [generateCode]);
@@ -65,6 +87,11 @@ export const GameTimedCode: React.FC<GameTimedCodeProps> = ({ onSuccess, codeLen
     if (enteredCode.length >= codeLength) return;
 
     sounds.playBlip(480 + parseInt(d, 10) * 30);
+    const info = JAPANESE_DIGITS[d];
+    if (info) {
+      sounds.speakJapanese(info.kana);
+    }
+
     const next = enteredCode + d;
     setEnteredCode(next);
 
@@ -77,7 +104,7 @@ export const GameTimedCode: React.FC<GameTimedCodeProps> = ({ onSuccess, codeLen
         sounds.playFail();
         setTimeout(() => {
           setEnteredCode('');
-        }, 350);
+        }, 400);
       }
     }
   }, [gameOver, won, enteredCode, codeLength, targetCode, onSuccess]);
@@ -103,9 +130,12 @@ export const GameTimedCode: React.FC<GameTimedCodeProps> = ({ onSuccess, codeLen
   }, [enterDigit]);
 
   return (
-    <div className="flex flex-col items-center select-none font-pixel w-full max-w-[460px]">
+    <div className="flex flex-col items-center select-none font-pixel w-full max-w-[480px]">
       <div className="flex justify-between items-center w-full mb-2 text-xs sm:text-sm">
-        <span className="text-amber-400 font-bold">KEYPAD LOCK</span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-amber-400 font-bold">KEYPAD LOCK</span>
+          <span className="text-[10px] text-slate-400 font-mono hidden xs:inline">(JAPANESE NUMBERS)</span>
+        </div>
         <span className={`font-bold ${timeLeft <= 4 ? 'text-red-400 animate-pulse' : 'text-slate-300'}`}>
           TIME: {timeLeft}s
         </span>
@@ -117,70 +147,132 @@ export const GameTimedCode: React.FC<GameTimedCodeProps> = ({ onSuccess, codeLen
           className={`h-full transition-all duration-1000 ${
             timeLeft <= 4 ? 'bg-red-500' : 'bg-emerald-400'
           }`}
-          style={{ width: `${(timeLeft / 12) * 100}%` }}
+          style={{ width: `${(timeLeft / TOTAL_TIME) * 100}%` }}
         />
       </div>
 
-      <div className="relative bg-slate-950 p-4 sm:p-6 border-4 border-slate-700 shadow-2xl w-full flex flex-col items-center">
-        {/* Code Displays */}
-        <div className="bg-slate-900 border-2 border-slate-800 p-3 w-full text-center mb-3">
-          <div className="text-[11px] sm:text-xs text-slate-400 mb-1">TARGET CODE:</div>
-          <div className="text-2xl sm:text-3xl tracking-widest text-emerald-400 font-bold font-mono">
-            {targetCode.split('').join(' ')}
+      <div className="relative bg-slate-950 p-3.5 sm:p-5 border-4 border-slate-700 shadow-2xl w-full flex flex-col items-center">
+        {/* Target Code Box */}
+        <div className="bg-slate-900 border-2 border-slate-800 p-2.5 sm:p-3 w-full text-center mb-3 shadow-inner">
+          <div className="text-[10px] sm:text-xs text-amber-300 font-pixel mb-1 flex items-center justify-center gap-1">
+            <span>TARGET CODE:</span>
+            <span className="text-slate-400 text-[9px] font-mono">(MATCH THE KANJI)</span>
+          </div>
+          <div className="flex justify-center items-center gap-2 sm:gap-3.5 my-1">
+            {targetCode.split('').map((digit, idx) => {
+              const info = JAPANESE_DIGITS[digit] || { digit, kanji: digit, romaji: digit };
+              return (
+                <div
+                  key={idx}
+                  className="flex flex-col items-center bg-slate-950 px-2 sm:px-3 py-1 border border-emerald-500/60 min-w-[50px] sm:min-w-[56px] shadow-sm"
+                >
+                  <span className="text-2xl sm:text-3xl text-emerald-400 font-bold font-kana filter drop-shadow">
+                    {info.kanji}
+                  </span>
+                  <span className="text-[9px] sm:text-[10px] text-emerald-200/90 font-mono mt-0.5">
+                    {info.digit} • {info.romaji}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        <div className="bg-slate-900 border-2 border-slate-700 p-3 w-full text-center mb-4">
-          <div className="text-[11px] sm:text-xs text-slate-400 mb-1">ENTERED:</div>
-          <div className="text-2xl sm:text-3xl tracking-widest text-yellow-300 font-bold font-mono h-8 sm:h-9">
-            {enteredCode ? enteredCode.split('').join(' ') : '— — — —'}
+        {/* Entered Code Box */}
+        <div className="bg-slate-900 border-2 border-slate-700 p-2.5 sm:p-3 w-full text-center mb-3.5 shadow-inner">
+          <div className="text-[10px] sm:text-xs text-slate-400 mb-1 font-pixel">ENTERED:</div>
+          <div className="flex justify-center items-center gap-2 sm:gap-3.5 h-12 sm:h-14">
+            {Array.from({ length: codeLength }).map((_, idx) => {
+              const char = enteredCode[idx];
+              if (char) {
+                const info = JAPANESE_DIGITS[char] || { digit: char, kanji: char, romaji: char };
+                return (
+                  <div
+                    key={idx}
+                    className="flex flex-col items-center bg-slate-950 px-2 sm:px-3 py-1 border border-yellow-400 min-w-[50px] sm:min-w-[56px] shadow-[0_0_10px_rgba(250,204,21,0.25)] animate-in zoom-in-75 duration-150"
+                  >
+                    <span className="text-2xl sm:text-3xl text-yellow-300 font-bold font-kana">
+                      {info.kanji}
+                    </span>
+                    <span className="text-[8px] sm:text-[9px] text-yellow-100 font-mono mt-0.5">
+                      {info.romaji}
+                    </span>
+                  </div>
+                );
+              }
+              return (
+                <div
+                  key={idx}
+                  className="w-[50px] sm:w-[56px] h-11 sm:h-12 border-2 border-dashed border-slate-700 bg-slate-950/60 flex items-center justify-center text-slate-600 text-lg font-mono"
+                >
+                  —
+                </div>
+              );
+            })}
           </div>
         </div>
 
-        {/* Numpad */}
-        <div className="grid grid-cols-3 gap-2.5 sm:gap-3 w-64 sm:w-72 mb-2">
-          {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
-            <button
-              key={digit}
-              onClick={() => enterDigit(digit)}
-              className="h-12 sm:h-14 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-200 border-2 border-slate-600 text-base sm:text-lg font-bold cursor-pointer rounded"
-            >
-              {digit}
-            </button>
-          ))}
+        {/* Numpad with Japanese Numbers */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-2.5 w-full max-w-[320px] mb-1">
+          {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => {
+            const info = JAPANESE_DIGITS[digit];
+            return (
+              <button
+                key={digit}
+                onClick={() => enterDigit(digit)}
+                className="h-13 sm:h-15 bg-slate-900 hover:bg-slate-800 active:bg-indigo-900 text-slate-100 border-2 border-slate-700 hover:border-yellow-400 active:scale-95 flex flex-col items-center justify-center cursor-pointer rounded shadow transition-all group"
+              >
+                <span className="font-kana text-lg sm:text-xl font-bold text-yellow-300 group-hover:text-yellow-200">
+                  {info.kanji}
+                </span>
+                <span className="text-[9px] text-slate-400 font-mono">
+                  {info.digit} • {info.romaji}
+                </span>
+              </button>
+            );
+          })}
           <button
             onClick={backspace}
-            className="h-12 sm:h-14 bg-rose-900/60 hover:bg-rose-800 text-rose-300 border-2 border-rose-700 text-xs sm:text-sm font-bold cursor-pointer rounded"
+            className="h-13 sm:h-15 bg-rose-950/70 hover:bg-rose-900 text-rose-300 border-2 border-rose-700 active:scale-95 flex flex-col items-center justify-center cursor-pointer rounded shadow"
           >
-            DEL
+            <span className="text-xs sm:text-sm font-bold">DEL</span>
+            <span className="text-[8px] text-rose-400">削除</span>
           </button>
           <button
             onClick={() => enterDigit('0')}
-            className="h-12 sm:h-14 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-200 border-2 border-slate-600 text-base sm:text-lg font-bold cursor-pointer rounded"
+            className="h-13 sm:h-15 bg-slate-900 hover:bg-slate-800 active:bg-indigo-900 text-slate-100 border-2 border-slate-700 hover:border-yellow-400 active:scale-95 flex flex-col items-center justify-center cursor-pointer rounded shadow transition-all group"
           >
-            0
+            <span className="font-kana text-lg sm:text-xl font-bold text-yellow-300 group-hover:text-yellow-200">
+              〇
+            </span>
+            <span className="text-[9px] text-slate-400 font-mono">
+              0 • zero
+            </span>
           </button>
           <button
             onClick={() => setEnteredCode('')}
-            className="h-12 sm:h-14 bg-slate-800 hover:bg-slate-700 text-slate-400 border-2 border-slate-600 text-xs sm:text-sm font-bold cursor-pointer rounded"
+            className="h-13 sm:h-15 bg-slate-900 hover:bg-slate-800 text-slate-400 border-2 border-slate-700 active:scale-95 flex flex-col items-center justify-center cursor-pointer rounded shadow"
           >
-            CLR
+            <span className="text-xs sm:text-sm font-bold">CLR</span>
+            <span className="text-[8px] text-slate-500">クリア</span>
           </button>
         </div>
 
         {won && (
-          <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center border-2 border-emerald-400 p-4">
-            <span className="text-emerald-400 text-base sm:text-lg mb-2 font-bold">CODE ACCEPTED!</span>
+          <div className="absolute inset-0 bg-black/90 flex flex-col items-center justify-center border-2 border-emerald-400 p-4 animate-in fade-in">
+            <span className="text-emerald-400 text-base sm:text-lg mb-2 font-bold font-pixel animate-bounce">
+              ★ CODE ACCEPTED! ★
+            </span>
             <span className="text-xs sm:text-sm text-slate-300">Dispensing Kana reward...</span>
           </div>
         )}
 
         {gameOver && !won && (
-          <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center border-2 border-red-500 p-4">
-            <span className="text-red-400 text-base sm:text-lg mb-2 font-bold">TIME EXPIRED!</span>
+          <div className="absolute inset-0 bg-black/90 flex flex-col items-center justify-center border-2 border-red-500 p-4 animate-in fade-in">
+            <span className="text-red-400 text-base sm:text-lg mb-2 font-bold font-pixel">TIME EXPIRED!</span>
             <button
               onClick={restart}
-              className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-xs sm:text-sm font-bold border-2 border-white cursor-pointer active:translate-y-0.5"
+              className="px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white text-xs sm:text-sm font-bold border-2 border-white cursor-pointer active:translate-y-0.5 shadow-lg mt-2"
             >
               TRY AGAIN
             </button>
@@ -188,7 +280,9 @@ export const GameTimedCode: React.FC<GameTimedCodeProps> = ({ onSuccess, codeLen
         )}
       </div>
 
-      <p className="text-[11px] sm:text-xs text-slate-400 mt-2">Use Keyboard Numbers or Click Buttons</p>
+      <p className="text-[10px] sm:text-[11px] text-slate-400 mt-2 text-center">
+        Press Keyboard Numbers (0-9) or Click Japanese Keypad Buttons
+      </p>
     </div>
   );
 };

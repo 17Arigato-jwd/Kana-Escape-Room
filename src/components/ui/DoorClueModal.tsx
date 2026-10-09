@@ -7,6 +7,7 @@ interface DoorClueModalProps {
   isUnlocked: boolean;
   onOpenDoor: () => void;
   onClose: () => void;
+  onUnlockDoor?: () => void;
 }
 
 export const DoorClueModal: React.FC<DoorClueModalProps> = ({
@@ -14,6 +15,7 @@ export const DoorClueModal: React.FC<DoorClueModalProps> = ({
   isUnlocked,
   onOpenDoor,
   onClose,
+  onUnlockDoor,
 }) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -79,7 +81,7 @@ export const DoorClueModal: React.FC<DoorClueModalProps> = ({
           </div>
         )}
 
-        <div className="flex gap-4 mt-2">
+        <div className="flex gap-3 mt-2 flex-wrap justify-center">
           {isUnlocked ? (
             <button
               onClick={() => {
@@ -91,15 +93,31 @@ export const DoorClueModal: React.FC<DoorClueModalProps> = ({
               [E] PASS THROUGH DOOR
             </button>
           ) : (
-            <button
-              onClick={() => {
-                sounds.playSelect();
-                onClose();
-              }}
-              className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-pixel text-xs border-2 border-slate-500 cursor-pointer active:translate-y-0.5"
-            >
-              [OK] UNDERSTOOD
-            </button>
+            <>
+              <button
+                onClick={() => {
+                  sounds.playSelect();
+                  onClose();
+                }}
+                className="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-pixel text-xs border-2 border-slate-500 cursor-pointer active:translate-y-0.5"
+              >
+                [OK] UNDERSTOOD
+              </button>
+
+              {onUnlockDoor && (
+                <button
+                  onClick={() => {
+                    sounds.playSuccess();
+                    onUnlockDoor();
+                  }}
+                  title="Test shortcut: Instantly break this door seal"
+                  className="px-4 py-2 bg-amber-600 hover:bg-amber-500 text-yellow-100 font-pixel text-xs border-2 border-yellow-300 cursor-pointer active:translate-y-0.5 shadow-lg flex items-center gap-1.5 animate-pulse"
+                >
+                  <span>🔓</span>
+                  <span>UNLOCK DOOR (TEST)</span>
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>

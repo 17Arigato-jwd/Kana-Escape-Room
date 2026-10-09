@@ -400,6 +400,7 @@ export default function App() {
           {/* Top Bar / HUD */}
           <HUD
             currentRoom={currentRoom}
+            currentRoomIndex={currentRoomIndex}
             inventory={inventory}
             isDoorUnlocked={isDoorUnlocked}
             onOpenInventory={() => {
@@ -409,6 +410,12 @@ export default function App() {
             onOpenPauseMenu={() => {
               sounds.playSelect();
               setGameState('PAUSED');
+            }}
+            onUnlockDoor={handleUnlockDoor}
+            onSelectRoomIndex={(idx) => {
+              if (idx >= 0 && idx < ROOMS.length) {
+                setCurrentRoomIndex(idx);
+              }
             }}
           />
 
@@ -469,6 +476,7 @@ export default function App() {
           door={currentRoom.exitDoor}
           isUnlocked={isDoorUnlocked}
           onOpenDoor={handleOpenDoor}
+          onUnlockDoor={handleUnlockDoor}
           onClose={() => setGameState('PLAYING')}
         />
       )}
