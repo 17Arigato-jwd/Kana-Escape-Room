@@ -103,16 +103,16 @@ export const GameTimedCode: React.FC<GameTimedCodeProps> = ({ onSuccess, codeLen
   }, [enterDigit]);
 
   return (
-    <div className="flex flex-col items-center select-none font-pixel w-full max-w-xs">
-      <div className="flex justify-between items-center w-full mb-2 text-xs">
-        <span className="text-amber-400">KEYPAD LOCK</span>
+    <div className="flex flex-col items-center select-none font-pixel w-full max-w-[460px]">
+      <div className="flex justify-between items-center w-full mb-2 text-xs sm:text-sm">
+        <span className="text-amber-400 font-bold">KEYPAD LOCK</span>
         <span className={`font-bold ${timeLeft <= 4 ? 'text-red-400 animate-pulse' : 'text-slate-300'}`}>
           TIME: {timeLeft}s
         </span>
       </div>
 
       {/* Timer Bar */}
-      <div className="w-full bg-slate-800 h-2 mb-3 border border-slate-700">
+      <div className="w-full bg-slate-800 h-2.5 mb-3 border border-slate-700">
         <div
           className={`h-full transition-all duration-1000 ${
             timeLeft <= 4 ? 'bg-red-500' : 'bg-emerald-400'
@@ -121,48 +121,48 @@ export const GameTimedCode: React.FC<GameTimedCodeProps> = ({ onSuccess, codeLen
         />
       </div>
 
-      <div className="bg-slate-950 p-4 border-4 border-slate-700 shadow-2xl w-full flex flex-col items-center">
+      <div className="relative bg-slate-950 p-4 sm:p-6 border-4 border-slate-700 shadow-2xl w-full flex flex-col items-center">
         {/* Code Displays */}
-        <div className="bg-slate-900 border-2 border-slate-800 p-2 w-full text-center mb-3">
-          <div className="text-[10px] text-slate-400 mb-1">TARGET CODE:</div>
-          <div className="text-xl tracking-widest text-emerald-400 font-bold font-mono">
+        <div className="bg-slate-900 border-2 border-slate-800 p-3 w-full text-center mb-3">
+          <div className="text-[11px] sm:text-xs text-slate-400 mb-1">TARGET CODE:</div>
+          <div className="text-2xl sm:text-3xl tracking-widest text-emerald-400 font-bold font-mono">
             {targetCode.split('').join(' ')}
           </div>
         </div>
 
-        <div className="bg-slate-900 border-2 border-slate-700 p-2 w-full text-center mb-4">
-          <div className="text-[10px] text-slate-400 mb-1">ENTERED:</div>
-          <div className="text-xl tracking-widest text-yellow-300 font-bold font-mono h-7">
+        <div className="bg-slate-900 border-2 border-slate-700 p-3 w-full text-center mb-4">
+          <div className="text-[11px] sm:text-xs text-slate-400 mb-1">ENTERED:</div>
+          <div className="text-2xl sm:text-3xl tracking-widest text-yellow-300 font-bold font-mono h-8 sm:h-9">
             {enteredCode ? enteredCode.split('').join(' ') : '— — — —'}
           </div>
         </div>
 
         {/* Numpad */}
-        <div className="grid grid-cols-3 gap-2 w-48 mb-2">
+        <div className="grid grid-cols-3 gap-2.5 sm:gap-3 w-64 sm:w-72 mb-2">
           {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map((digit) => (
             <button
               key={digit}
               onClick={() => enterDigit(digit)}
-              className="h-10 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-200 border-2 border-slate-600 text-sm font-bold cursor-pointer"
+              className="h-12 sm:h-14 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-200 border-2 border-slate-600 text-base sm:text-lg font-bold cursor-pointer rounded"
             >
               {digit}
             </button>
           ))}
           <button
             onClick={backspace}
-            className="h-10 bg-rose-900/60 hover:bg-rose-800 text-rose-300 border-2 border-rose-700 text-[10px] cursor-pointer"
+            className="h-12 sm:h-14 bg-rose-900/60 hover:bg-rose-800 text-rose-300 border-2 border-rose-700 text-xs sm:text-sm font-bold cursor-pointer rounded"
           >
             DEL
           </button>
           <button
             onClick={() => enterDigit('0')}
-            className="h-10 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-200 border-2 border-slate-600 text-sm font-bold cursor-pointer"
+            className="h-12 sm:h-14 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-slate-200 border-2 border-slate-600 text-base sm:text-lg font-bold cursor-pointer rounded"
           >
             0
           </button>
           <button
             onClick={() => setEnteredCode('')}
-            className="h-10 bg-slate-800 hover:bg-slate-700 text-slate-400 border-2 border-slate-600 text-[10px] cursor-pointer"
+            className="h-12 sm:h-14 bg-slate-800 hover:bg-slate-700 text-slate-400 border-2 border-slate-600 text-xs sm:text-sm font-bold cursor-pointer rounded"
           >
             CLR
           </button>
@@ -170,17 +170,17 @@ export const GameTimedCode: React.FC<GameTimedCodeProps> = ({ onSuccess, codeLen
 
         {won && (
           <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center border-2 border-emerald-400 p-4">
-            <span className="text-emerald-400 text-sm mb-2">CODE ACCEPTED!</span>
-            <span className="text-xs text-slate-300">Dispensing Kana reward...</span>
+            <span className="text-emerald-400 text-base sm:text-lg mb-2 font-bold">CODE ACCEPTED!</span>
+            <span className="text-xs sm:text-sm text-slate-300">Dispensing Kana reward...</span>
           </div>
         )}
 
         {gameOver && !won && (
           <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center border-2 border-red-500 p-4">
-            <span className="text-red-400 text-sm mb-2">TIME EXPIRED!</span>
+            <span className="text-red-400 text-base sm:text-lg mb-2 font-bold">TIME EXPIRED!</span>
             <button
               onClick={restart}
-              className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white text-[10px] border-2 border-white cursor-pointer active:translate-y-0.5"
+              className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-xs sm:text-sm font-bold border-2 border-white cursor-pointer active:translate-y-0.5"
             >
               TRY AGAIN
             </button>
@@ -188,7 +188,7 @@ export const GameTimedCode: React.FC<GameTimedCodeProps> = ({ onSuccess, codeLen
         )}
       </div>
 
-      <p className="text-[10px] text-slate-400 mt-2">Use Keyboard Numbers or Click Buttons</p>
+      <p className="text-[11px] sm:text-xs text-slate-400 mt-2">Use Keyboard Numbers or Click Buttons</p>
     </div>
   );
 };

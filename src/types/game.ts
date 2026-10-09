@@ -113,4 +113,5 @@ export interface GameSaveState {
   gameCompleted: boolean;
   playtimeSeconds: number;
   volumeEnabled: boolean;
+  shuffledRewards?: Record<string, KanaItem>;
 }

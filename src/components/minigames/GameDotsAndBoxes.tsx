@@ -66,11 +66,59 @@ export const GameDotsAndBoxes: React.FC<GameDotsAndBoxesProps> = ({ onSuccess })
     return { nextBoxes, newlyClaimed };
   };
 
-  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const s = stateRef.current;
-    if (!s.isPlayerTurn || s.won || s.gameOver || !hoveredLine) return;
+  const getLineAtPoint = (clientX: number, clientY: number, tolerance: number = 10) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const mx = (clientX - rect.left) * scaleX;
+    const my = (clientY - rect.top) * scaleY;
 
-    const { type, r, c } = hoveredLine;
+    let closest: { type: 'H' | 'V'; r: number; c: number; dist: number } | null = null;
+
+    // Check Horizontal Lines
+    for (let r = 0; r < DOTS; r++) {
+      for (let c = 0; c < BOXES; c++) {
+        if (stateRef.current.hLines[`${r}-${c}`]) continue;
+        const x1 = OFFSET + c * SPACING;
+        const x2 = x1 + SPACING;
+        const y = OFFSET + r * SPACING;
+
+        if (mx >= x1 && mx <= x2) {
+          const dist = Math.abs(my - y);
+          if (dist <= tolerance && (!closest || dist < closest.dist)) {
+            closest = { type: 'H', r, c, dist };
+          }
+        }
+      }
+    }
+
+    // Check Vertical Lines
+    for (let r = 0; r < BOXES; r++) {
+      for (let c = 0; c < DOTS; c++) {
+        if (stateRef.current.vLines[`${r}-${c}`]) continue;
+        const x = OFFSET + c * SPACING;
+        const y1 = OFFSET + r * SPACING;
+        const y2 = y1 + SPACING;
+
+        if (my >= y1 && my <= y2) {
+          const dist = Math.abs(mx - x);
+          if (dist <= tolerance && (!closest || dist < closest.dist)) {
+            closest = { type: 'V', r, c, dist };
+          }
+        }
+      }
+    }
+
+    return closest ? { type: closest.type, r: closest.r, c: closest.c } : null;
+  };
+
+  const applyLineMove = (line: { type: 'H' | 'V'; r: number; c: number }) => {
+    const s = stateRef.current;
+    if (!s.isPlayerTurn || s.won || s.gameOver) return;
+
+    const { type, r, c } = line;
     const key = `${r}-${c}`;
 
     if (type === 'H') {
@@ -85,6 +133,8 @@ export const GameDotsAndBoxes: React.FC<GameDotsAndBoxesProps> = ({ onSuccess })
       setVLines({ ...s.vLines });
     }
 
+    setHoveredLine(null);
+
     const { nextBoxes, newlyClaimed } = checkBoxCompletion(s.hLines, s.vLines, s.boxes, 'P');
     s.boxes = nextBoxes;
     setBoxes(nextBoxes);
@@ -93,7 +143,6 @@ export const GameDotsAndBoxes: React.FC<GameDotsAndBoxesProps> = ({ onSuccess })
       sounds.playKanaObtained();
       s.playerScore += newlyClaimed;
       setPlayerScore(s.playerScore);
-      // Completing a box gives a bonus turn!
       checkGameEnd();
     } else {
       // 1 chance per turn! Pass to AI
@@ -101,6 +150,23 @@ export const GameDotsAndBoxes: React.FC<GameDotsAndBoxesProps> = ({ onSuccess })
       setIsPlayerTurn(false);
       checkGameEnd();
       setTimeout(runAiTurn, 400);
+    }
+  };
+
+  const handleCanvasClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const line = hoveredLine || getLineAtPoint(e.clientX, e.clientY, 12);
+    if (line) {
+      applyLineMove(line);
+    }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLCanvasElement>) => {
+    if (e.touches.length === 0) return;
+    const touch = e.touches[0];
+    const line = getLineAtPoint(touch.clientX, touch.clientY, 14);
+    if (line) {
+      e.preventDefault();
+      applyLineMove(line);
     }
   };
 
@@ -213,53 +279,9 @@ export const GameDotsAndBoxes: React.FC<GameDotsAndBoxesProps> = ({ onSuccess })
 
   // Canvas Hover detection
   const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas || !stateRef.current.isPlayerTurn) return;
-    const rect = canvas.getBoundingClientRect();
-    const mx = e.clientX - rect.left;
-    const my = e.clientY - rect.top;
-
-    let closest: { type: 'H' | 'V'; r: number; c: number; dist: number } | null = null;
-
-    // Check Horizontal Lines
-    for (let r = 0; r < DOTS; r++) {
-      for (let c = 0; c < BOXES; c++) {
-        if (stateRef.current.hLines[`${r}-${c}`]) continue;
-        const x1 = OFFSET + c * SPACING;
-        const x2 = x1 + SPACING;
-        const y = OFFSET + r * SPACING;
-
-        if (mx >= x1 && mx <= x2) {
-          const dist = Math.abs(my - y);
-          if (dist < 8 && (!closest || dist < closest.dist)) {
-            closest = { type: 'H', r, c, dist };
-          }
-        }
-      }
-    }
-
-    // Check Vertical Lines
-    for (let r = 0; r < BOXES; r++) {
-      for (let c = 0; c < DOTS; c++) {
-        if (stateRef.current.vLines[`${r}-${c}`]) continue;
-        const x = OFFSET + c * SPACING;
-        const y1 = OFFSET + r * SPACING;
-        const y2 = y1 + SPACING;
-
-        if (my >= y1 && my <= y2) {
-          const dist = Math.abs(mx - x);
-          if (dist < 8 && (!closest || dist < closest.dist)) {
-            closest = { type: 'V', r, c, dist };
-          }
-        }
-      }
-    }
-
-    if (closest) {
-      setHoveredLine({ type: closest.type, r: closest.r, c: closest.c });
-    } else {
-      setHoveredLine(null);
-    }
+    if (!stateRef.current.isPlayerTurn) return;
+    const line = getLineAtPoint(e.clientX, e.clientY, 8);
+    setHoveredLine(line);
   };
 
   // Render 10x10 dots & lines on canvas
@@ -360,15 +382,15 @@ export const GameDotsAndBoxes: React.FC<GameDotsAndBoxesProps> = ({ onSuccess })
   };
 
   return (
-    <div className="flex flex-col items-center select-none font-pixel w-full max-w-xs">
-      <div className="flex justify-between items-center w-full mb-1 text-xs">
+    <div className="flex flex-col items-center select-none font-pixel w-full max-w-[540px]">
+      <div className="flex justify-between items-center w-full mb-2 text-xs sm:text-sm">
         <span className="text-cyan-400 font-bold">YOU: {playerScore} BOXES</span>
-        <span className="text-yellow-400 font-mono text-[10px]">10x10 DOTS (81 BOXES)</span>
+        <span className="text-yellow-400 font-mono text-[10px] sm:text-xs">10x10 DOTS (81 BOXES)</span>
         <span className="text-rose-400 font-bold">AI: {aiScore} BOXES</span>
       </div>
 
-      <div className="relative bg-slate-950 p-2 border-4 border-slate-700 shadow-2xl flex flex-col items-center">
-        <div className="text-[10px] text-yellow-300 mb-1 font-bold h-4">
+      <div className="relative bg-slate-950 p-3 sm:p-5 border-4 border-slate-700 shadow-2xl flex flex-col items-center w-full">
+        <div className="text-xs sm:text-sm text-yellow-300 mb-2 font-bold h-5 text-center">
           {isPlayerTurn ? 'YOUR TURN (1 LINE — BONUS ON BOX)' : 'AI IS PLAYING...'}
         </div>
 
@@ -378,16 +400,17 @@ export const GameDotsAndBoxes: React.FC<GameDotsAndBoxesProps> = ({ onSuccess })
           height={270}
           onMouseMove={handleMouseMove}
           onClick={handleCanvasClick}
-          className="pixelated block cursor-pointer border border-slate-800"
+          onTouchStart={handleTouchStart}
+          className="pixelated block cursor-pointer border border-slate-800 touch-none w-full max-w-[480px] aspect-square object-contain"
         />
 
         {won && (
           <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center border-2 border-emerald-400 p-4 animate-in fade-in z-20">
-            <span className="text-emerald-400 text-sm mb-1 font-bold">★ MAJORITY CAPTURED! ★</span>
-            <span className="text-[10px] text-slate-300 mb-3">You conquered the 10x10 territory!</span>
+            <span className="text-emerald-400 text-base sm:text-lg mb-2 font-bold">★ MAJORITY CAPTURED! ★</span>
+            <span className="text-xs sm:text-sm text-slate-300 mb-4 text-center">You conquered the 10x10 territory!</span>
             <button
               onClick={() => onSuccessRef.current()}
-              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold border-2 border-white cursor-pointer shadow-lg"
+              className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black text-xs sm:text-sm font-bold border-2 border-white cursor-pointer shadow-lg"
             >
               CLAIM REWARD NOW
             </button>
@@ -396,10 +419,10 @@ export const GameDotsAndBoxes: React.FC<GameDotsAndBoxesProps> = ({ onSuccess })
 
         {gameOver && !won && (
           <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center border-2 border-red-500 p-4 z-20">
-            <span className="text-red-400 text-xs mb-3 font-bold">AI SECURED MORE TERRITORY</span>
+            <span className="text-red-400 text-sm mb-3 font-bold">AI SECURED MORE TERRITORY</span>
             <button
               onClick={restartAll}
-              className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white text-[10px] border-2 border-white cursor-pointer"
+              className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-xs sm:text-sm font-bold border-2 border-white cursor-pointer"
             >
               TRY AGAIN
             </button>
@@ -407,7 +430,7 @@ export const GameDotsAndBoxes: React.FC<GameDotsAndBoxesProps> = ({ onSuccess })
         )}
       </div>
 
-      <p className="text-[9px] text-slate-400 mt-2 text-center">
+      <p className="text-[10px] sm:text-xs text-slate-400 mt-3 text-center">
         Each player gets 1 line per turn. Complete a 4th wall to capture the box & take an extra turn!
       </p>
     </div>

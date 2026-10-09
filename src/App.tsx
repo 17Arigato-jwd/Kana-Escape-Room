@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   CharacterId,
   InteractableObject,
@@ -6,7 +6,7 @@ import {
   GameSaveState,
   RoomData,
 } from './types/game';
-import { ROOMS } from './data/rooms';
+import { ROOMS, generateShuffledRoomRewards, applyShuffledRewards } from './data/rooms';
 import { GameViewport } from './game/GameViewport';
 import { HUD } from './components/ui/HUD';
 import { TitleScreen } from './components/ui/TitleScreen';
@@ -19,10 +19,12 @@ import { MiniGameModal } from './components/minigames/MiniGameModal';
 import { InventoryModal } from './components/inventory/InventoryModal';
 import { ScreenTransition } from './components/ui/ScreenTransition';
 import { sounds } from './utils/audio';
+import { useDeviceMode } from './utils/useDeviceMode';
 
 const STORAGE_KEY = 'kana_escape_room_save';
 
 export default function App() {
+  const device = useDeviceMode();
   // Navigation / Modal States
   const [gameState, setGameState] = useState<
     'TITLE' | 'PLAYING' | 'MINIGAME' | 'INVENTORY' | 'DOOR_CLUE' | 'REWARD' | 'ROOM_VICTORY' | 'ENDING' | 'PAUSED'
@@ -37,6 +39,22 @@ export default function App() {
   const [unlockedDoors, setUnlockedDoors] = useState<string[]>([]);
   const [playtimeSeconds, setPlaytimeSeconds] = useState(0);
   const [volumeEnabled, setVolumeEnabled] = useState(true);
+
+  // Active room minigame reward distribution per run
+  const [shuffledRewards, setShuffledRewards] = useState<Record<string, KanaItem>>(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed: GameSaveState = JSON.parse(raw);
+        if (parsed.shuffledRewards && Object.keys(parsed.shuffledRewards).length > 0) {
+          return parsed.shuffledRewards;
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return generateShuffledRoomRewards(ROOMS);
+  });
 
   // Active interaction targets
   const [activeInteractable, setActiveInteractable] = useState<InteractableObject | null>(null);
@@ -67,9 +85,9 @@ export default function App() {
   // Save current progress helper
   const saveGame = useCallback(() => {
     try {
-      const currentRoom = ROOMS[currentRoomIndex];
+      const baseRoom = ROOMS[currentRoomIndex] || ROOMS[0];
       const data: GameSaveState = {
-        currentRoomId: currentRoom.id,
+        currentRoomId: baseRoom.id,
         selectedCharacter,
         inventory,
         completedMinigames,
@@ -78,6 +96,7 @@ export default function App() {
         gameCompleted: false,
         playtimeSeconds,
         volumeEnabled,
+        shuffledRewards,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       setHasSaveData(true);
@@ -93,6 +112,7 @@ export default function App() {
     unlockedDoors,
     playtimeSeconds,
     volumeEnabled,
+    shuffledRewards,
   ]);
 
   // Autosave when room/inventory/unlocked status changes during play
@@ -100,11 +120,18 @@ export default function App() {
     if (gameState !== 'TITLE') {
       saveGame();
     }
-  }, [gameState, inventory, completedMinigames, unlockedDoors, saveGame]);
+  }, [gameState, inventory, completedMinigames, unlockedDoors, shuffledRewards, saveGame]);
 
   // Playtime tick
   useEffect(() => {
-    if (gameState === 'TITLE' || gameState === 'ENDING' || gameState === 'PAUSED') return;
+    if (
+      gameState === 'TITLE' ||
+      gameState === 'ENDING' ||
+      gameState === 'PAUSED' ||
+      gameState === 'REWARD' ||
+      gameState === 'ROOM_VICTORY'
+    )
+      return;
     const timer = setInterval(() => {
       setPlaytimeSeconds((s) => s + 1);
     }, 1000);
@@ -162,8 +189,10 @@ export default function App() {
     }
   }, [currentRoomIndex, gameState]);
 
-  // Start fresh game with transition
+  // Start fresh game with transition and a new randomized Kana distribution
   const handleStartNewGame = () => {
+    const freshRewards = generateShuffledRoomRewards(ROOMS);
+    setShuffledRewards(freshRewards);
     setCurrentRoomIndex(0);
     setInventory([]);
     setCompletedMinigames([]);
@@ -193,6 +222,11 @@ export default function App() {
         setPlaytimeSeconds(data.playtimeSeconds || 0);
         setVolumeEnabled(data.volumeEnabled ?? true);
         sounds.setEnabled(data.volumeEnabled ?? true);
+        if (data.shuffledRewards && Object.keys(data.shuffledRewards).length > 0) {
+          setShuffledRewards(data.shuffledRewards);
+        } else {
+          setShuffledRewards(generateShuffledRoomRewards(ROOMS));
+        }
         setTargetNextRoomIndex(targetIdx);
         setTransitionActive(true);
         setGameState('PLAYING');
@@ -209,10 +243,35 @@ export default function App() {
   const handleResetSave = () => {
     localStorage.removeItem(STORAGE_KEY);
     setHasSaveData(false);
+    setShuffledRewards(generateShuffledRoomRewards(ROOMS));
     sounds.playFail();
   };
 
-  const currentRoom: RoomData = ROOMS[currentRoomIndex] || ROOMS[0];
+  // Import save data handler
+  const handleSaveImported = (data: GameSaveState) => {
+    const rIndex = ROOMS.findIndex((r) => r.id === data.currentRoomId);
+    const targetIdx = rIndex !== -1 ? rIndex : 0;
+    setCurrentRoomIndex(targetIdx);
+    setSelectedCharacter(data.selectedCharacter || 'adam');
+    setInventory(data.inventory || []);
+    setCompletedMinigames(data.completedMinigames || []);
+    setCraftedWords(data.craftedWords || []);
+    setUnlockedDoors(data.unlockedDoors || []);
+    setPlaytimeSeconds(data.playtimeSeconds || 0);
+    setVolumeEnabled(data.volumeEnabled ?? true);
+    sounds.setEnabled(data.volumeEnabled ?? true);
+    if (data.shuffledRewards && Object.keys(data.shuffledRewards).length > 0) {
+      setShuffledRewards(data.shuffledRewards);
+    } else {
+      setShuffledRewards(generateShuffledRoomRewards(ROOMS));
+    }
+    setHasSaveData(true);
+  };
+
+  const currentRoom: RoomData = useMemo(() => {
+    const baseRoom = ROOMS[currentRoomIndex] || ROOMS[0];
+    return applyShuffledRewards(baseRoom, shuffledRewards);
+  }, [currentRoomIndex, shuffledRewards]);
   const isDoorUnlocked = unlockedDoors.includes(currentRoom.id);
 
   // Interaction handlers
@@ -243,6 +302,12 @@ export default function App() {
     setRewardKana(kana);
     setGameState('REWARD');
   }, [activeInteractable]);
+
+  const handleDismissReward = useCallback(() => {
+    setRewardKana(null);
+    setActiveInteractable(null);
+    setGameState('PLAYING');
+  }, []);
 
   const handleInteractDoor = () => {
     setGameState('DOOR_CLUE');
@@ -322,11 +387,16 @@ export default function App() {
           onStartNewGame={handleStartNewGame}
           onContinueGame={handleContinueGame}
           onResetSave={handleResetSave}
+          onSaveImported={handleSaveImported}
           volumeEnabled={volumeEnabled}
           onToggleVolume={toggleVolume}
         />
       ) : (
-        <div className="w-full h-full flex flex-col items-center justify-between p-2 sm:p-4 max-w-5xl">
+        <div
+          className={`w-full h-full flex flex-col items-center justify-between p-1.5 sm:p-3 transition-all ${
+            device.isDesktop ? 'max-w-7xl 2xl:max-w-[1536px]' : 'max-w-2xl sm:max-w-4xl'
+          }`}
+        >
           {/* Top Bar / HUD */}
           <HUD
             currentRoom={currentRoom}
@@ -378,11 +448,7 @@ export default function App() {
       {gameState === 'REWARD' && rewardKana && (
         <RewardNotification
           kana={rewardKana}
-          onDismiss={() => {
-            setRewardKana(null);
-            setActiveInteractable(null);
-            setGameState('PLAYING');
-          }}
+          onDismiss={handleDismissReward}
         />
       )}
 
@@ -433,6 +499,7 @@ export default function App() {
           onResume={() => setGameState('PLAYING')}
           onOpenInventory={() => setGameState('INVENTORY')}
           onQuitToTitle={() => setGameState('TITLE')}
+          onSaveImported={handleSaveImported}
         />
       )}
 

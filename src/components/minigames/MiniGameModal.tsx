@@ -114,8 +114,8 @@ export const MiniGameModal: React.FC<MiniGameModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xs p-4">
-      <div className="relative bg-[#1a192f] border-4 border-[#3b3a58] pixel-box p-6 max-w-lg w-full flex flex-col items-center shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-xs p-2 sm:p-4">
+      <div className="relative bg-[#1a192f] border-4 border-[#3b3a58] pixel-box p-4 sm:p-6 max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl w-full flex flex-col items-center shadow-2xl max-h-[96vh] overflow-y-auto">
         {/* Cabinet Header */}
         <div className="flex justify-between items-center w-full pb-3 border-b-2 border-slate-700/80 mb-4">
           <div className="flex items-center gap-2">
@@ -142,16 +142,16 @@ export const MiniGameModal: React.FC<MiniGameModalProps> = ({
               title="Exit minigame [ESC]"
               className="font-pixel text-[10px] sm:text-xs px-2.5 py-1 bg-rose-900/60 hover:bg-rose-700 text-rose-200 border-2 border-rose-500 cursor-pointer active:translate-y-0.5"
             >
-              ESC
+              [ESC]
             </button>
           </div>
         </div>
 
         {/* Reward Badge Banner */}
-        <div className="bg-slate-900/90 border-2 border-amber-500/60 px-4 py-1.5 mb-4 flex items-center gap-3">
+        <div className="bg-slate-950/90 border-2 border-amber-500/60 px-4 py-1.5 mb-4 flex items-center gap-3 shadow-inner">
           <span className="font-pixel text-[10px] text-amber-300">POTENTIAL REWARD:</span>
           <div className="flex items-center gap-1.5">
-            <span className="font-kana text-xl font-bold text-amber-400 bg-amber-950/80 px-2.5 py-0.5 border border-amber-500">
+            <span className="font-kana text-xl font-bold text-amber-400 bg-amber-950/90 px-2.5 py-0.5 border border-amber-500">
               {interactable.rewardKana.character}
             </span>
             <span className="font-mono text-xs text-amber-200">
@@ -161,7 +161,7 @@ export const MiniGameModal: React.FC<MiniGameModalProps> = ({
         </div>
 
         {/* Active Minigame with Suspense loading fallback and Universal Reset Key */}
-        <div className="w-full flex justify-center py-1 min-h-[220px] items-center">
+        <div className="w-full flex justify-center py-1 min-h-[340px] sm:min-h-[420px] items-center">
           <Suspense
             key={resetKey}
             fallback={

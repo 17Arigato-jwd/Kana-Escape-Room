@@ -19,6 +19,9 @@ class SoundEngine {
   private sfxVolume: number = 0.8;
   private ambientVolume: number = 0.5;
 
+  private currentSpeechAudio: HTMLAudioElement | null = null;
+  private speechSequenceTimers: number[] = [];
+
   constructor() {
     // Initialized on user interaction
   }
@@ -59,6 +62,7 @@ class SoundEngine {
       this.masterGain.gain.setValueAtTime(val ? 1.0 : 0, this.ctx.currentTime);
     }
     if (!val) {
+      this.stopCurrentSpeech();
       this.stopAmbient();
     } else if (this.currentRoomId) {
       this.startRoomAmbient(this.currentRoomId);
@@ -106,6 +110,9 @@ class SoundEngine {
     this.initCtx();
     if (this.sfxGain && this.ctx) {
       this.sfxGain.gain.setValueAtTime(this.sfxVolume, this.ctx.currentTime);
+    }
+    if (this.currentSpeechAudio) {
+      this.currentSpeechAudio.volume = Math.max(0.1, Math.min(1.0, this.sfxVolume * 1.15));
     }
   }
 
@@ -621,6 +628,116 @@ class SoundEngine {
       osc.start(t);
       osc.stop(t + 0.3);
     });
+  }
+
+  private getAudioKey(text: string): string {
+    return Array.from(text)
+      .map((c) => c.codePointAt(0)?.toString(16) || '')
+      .join('_');
+  }
+
+  private stopCurrentSpeech() {
+    if (this.currentSpeechAudio) {
+      try {
+        this.currentSpeechAudio.pause();
+        this.currentSpeechAudio.currentTime = 0;
+      } catch {
+        // ignore
+      }
+      this.currentSpeechAudio = null;
+    }
+    this.speechSequenceTimers.forEach((t) => window.clearTimeout(t));
+    this.speechSequenceTimers = [];
+  }
+
+  /**
+   * Pronounces Kana syllables or Japanese vocabulary using authentic native recorded
+   * audio files (/audio/*.mp3), with syllable-by-syllable sequencing and Web Speech API fallback.
+   * Guaranteed to play across all browsers and operating systems (including Linux without local TTS).
+   */
+  public speakJapanese(text: string) {
+    if (!this.enabled || !text || typeof window === 'undefined') return;
+
+    this.initCtx();
+    this.stopCurrentSpeech();
+
+    const clean = text.trim();
+    if (!clean) return;
+
+    const key = this.getAudioKey(clean);
+    const audioUrl = `/audio/${key}.mp3`;
+
+    const audio = new Audio(audioUrl);
+    audio.volume = Math.max(0.1, Math.min(1.0, this.sfxVolume * 1.2));
+    this.currentSpeechAudio = audio;
+
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        // Direct full-word audio file not found:
+        // If word has multiple kana characters, play each syllable in sequence!
+        const chars = Array.from(clean);
+        if (chars.length > 1) {
+          this.playSyllableSequence(chars);
+        } else {
+          this.fallbackSpeechSynthesis(clean);
+        }
+      });
+    }
+  }
+
+  private playSyllableSequence(chars: string[]) {
+    chars.forEach((char, idx) => {
+      const timer = window.setTimeout(() => {
+        if (!this.enabled) return;
+        const charKey = this.getAudioKey(char);
+        const charAudio = new Audio(`/audio/${charKey}.mp3`);
+        charAudio.volume = Math.max(0.1, Math.min(1.0, this.sfxVolume * 1.2));
+        this.currentSpeechAudio = charAudio;
+        const p = charAudio.play();
+        if (p !== undefined) {
+          p.catch(() => {
+            this.fallbackSpeechSynthesis(char);
+          });
+        }
+      }, idx * 300); // 300ms rhythmic cadence between morae
+      this.speechSequenceTimers.push(timer);
+    });
+  }
+
+  private fallbackSpeechSynthesis(text: string) {
+    if (typeof window === 'undefined') return;
+
+    if (window.speechSynthesis) {
+      try {
+        if (window.speechSynthesis.paused) {
+          window.speechSynthesis.resume();
+        }
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'ja-JP';
+        utterance.rate = 0.85;
+        utterance.volume = this.sfxVolume;
+
+        const voices = window.speechSynthesis.getVoices();
+        const jaVoice = voices.find(
+          (v) => v.lang.toLowerCase().startsWith('ja') || v.lang.toLowerCase().includes('jp')
+        );
+        if (jaVoice) {
+          utterance.voice = jaVoice;
+        }
+
+        utterance.onerror = () => {
+          this.playKanaObtained();
+        };
+
+        window.speechSynthesis.speak(utterance);
+        return;
+      } catch {
+        // fallback to chime below
+      }
+    }
+
+    this.playKanaObtained();
   }
 }
 

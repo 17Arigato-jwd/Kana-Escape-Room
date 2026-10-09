@@ -144,31 +144,31 @@ export const GameTicTacToe: React.FC<GameTicTacToeProps> = ({ onSuccess }) => {
   };
 
   return (
-    <div className="flex flex-col items-center select-none font-pixel w-full max-w-xs">
-      <div className="flex justify-between items-center w-full mb-2 text-xs">
+    <div className="flex flex-col items-center select-none font-pixel w-full max-w-[500px]">
+      <div className="flex justify-between items-center w-full mb-2 text-xs sm:text-sm">
         <span className="text-cyan-400 font-bold">TIC-TAC-TOE</span>
-        <span className="text-amber-300 text-[10px] font-mono bg-amber-950/80 px-2 py-0.5 border border-amber-500">
+        <span className="text-amber-300 text-[10px] sm:text-xs font-mono bg-amber-950/80 px-2 py-0.5 border border-amber-500">
           MATCH {gameCount}/5
         </span>
-        <span className="text-yellow-400 text-[10px]">3-IN-A-ROW</span>
+        <span className="text-yellow-400 text-[10px] sm:text-xs">3-IN-A-ROW</span>
       </div>
 
-      <div className="relative bg-slate-950 p-4 border-4 border-slate-700 shadow-2xl flex flex-col items-center">
-        <div className="text-[10px] text-yellow-300 mb-3 h-4 text-center font-bold tracking-wider">
+      <div className="relative bg-slate-950 p-4 sm:p-6 border-4 border-slate-700 shadow-2xl flex flex-col items-center w-full">
+        <div className="text-xs sm:text-sm text-yellow-300 mb-4 h-5 text-center font-bold tracking-wider">
           {status}
         </div>
 
-        <div className="grid grid-cols-3 gap-2 w-56 h-56">
+        <div className="grid grid-cols-3 gap-3 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96">
           {board.map((cell, idx) => (
             <button
               key={idx}
               onClick={() => handleCellClick(idx)}
               disabled={!isPlayerTurn || cell !== null || won}
-              className={`w-16 h-16 border-2 flex items-center justify-center text-2xl font-bold cursor-pointer transition-all ${
+              className={`w-full h-full aspect-square border-2 flex items-center justify-center text-3xl sm:text-4xl md:text-5xl font-bold cursor-pointer transition-all rounded ${
                 cell === 'X'
-                  ? 'bg-blue-950 border-blue-400 text-blue-300 shadow-[0_0_10px_rgba(59,130,246,0.5)]'
+                  ? 'bg-blue-950 border-blue-400 text-blue-300 shadow-[0_0_12px_rgba(59,130,246,0.6)]'
                   : cell === 'O'
-                  ? 'bg-rose-950 border-rose-400 text-rose-300 shadow-[0_0_10px_rgba(239,68,68,0.5)]'
+                  ? 'bg-rose-950 border-rose-400 text-rose-300 shadow-[0_0_12px_rgba(239,68,68,0.6)]'
                   : 'bg-slate-900 border-slate-700 hover:border-slate-500'
               }`}
             >
@@ -179,13 +179,13 @@ export const GameTicTacToe: React.FC<GameTicTacToeProps> = ({ onSuccess }) => {
 
         {won && (
           <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center border-2 border-emerald-400 p-4 animate-in fade-in z-20">
-            <span className="text-emerald-400 text-sm mb-1 font-bold">★ 3 IN A ROW ACHIEVED! ★</span>
-            <span className="text-[10px] text-slate-300 mb-3 text-center">
+            <span className="text-emerald-400 text-sm sm:text-base mb-2 font-bold">★ 3 IN A ROW ACHIEVED! ★</span>
+            <span className="text-xs sm:text-sm text-slate-300 mb-4 text-center">
               Decisive victory attained in Match {gameCount}!
             </span>
             <button
               onClick={() => onSuccessRef.current()}
-              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold border-2 border-white cursor-pointer shadow-lg"
+              className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black text-xs sm:text-sm font-bold border-2 border-white cursor-pointer shadow-lg"
             >
               CLAIM REWARD NOW
             </button>
@@ -193,7 +193,7 @@ export const GameTicTacToe: React.FC<GameTicTacToeProps> = ({ onSuccess }) => {
         )}
       </div>
 
-      <p className="text-[9px] text-slate-400 mt-2 text-center">
+      <p className="text-[10px] text-slate-400 mt-3 text-center">
         Draws will rematch. AI opens up tactics so you win within 5 matches!
       </p>
     </div>

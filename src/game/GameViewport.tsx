@@ -11,6 +11,8 @@ import {
 } from '../utils/pixelArt';
 import { sounds } from '../utils/audio';
 import { AtmosphericSystem } from './AtmosphericEffects';
+import { useDeviceMode } from '../utils/useDeviceMode';
+import { getRoomTheme } from '../utils/theme';
 
 interface GameViewportProps {
   room: RoomData;
@@ -27,7 +29,7 @@ interface GameViewportProps {
 }
 
 const TILE_SIZE = 16;
-const SCALE = 2.5; // Pixel zoom factor
+const DEFAULT_SCALE = 2.5;
 const PLAYER_SPEED = 2.0; // Balanced 16-pixel tile walking pace
 
 export const GameViewport: React.FC<GameViewportProps> = ({
@@ -43,6 +45,8 @@ export const GameViewport: React.FC<GameViewportProps> = ({
   onDebugUnlockDoor,
   onDebugGiveKana,
 }) => {
+  const device = useDeviceMode();
+  const theme = getRoomTheme(room.id);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   // Player position in pixels (relative to room)
@@ -60,9 +64,27 @@ export const GameViewport: React.FC<GameViewportProps> = ({
   const [nearbyInteractable, setNearbyInteractable] = useState<InteractableObject | null>(null);
   const [isNearDoor, setIsNearDoor] = useState(false);
   const [debugMode, setDebugMode] = useState(false);
+  const [showTouchControls, setShowTouchControls] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    return 'ontouchstart' in window || navigator.maxTouchPoints > 0 || window.innerWidth < 768;
+  });
 
   const keysRef = useRef<Record<string, boolean>>({});
   const atmosphereRef = useRef<AtmosphericSystem>(new AtmosphericSystem());
+
+  const setVirtualKey = (code: string, pressed: boolean) => {
+    if (isLocked) return;
+    keysRef.current[code] = pressed;
+  };
+
+  const handleVirtualInteract = () => {
+    if (isLocked) return;
+    if (isNearDoor) {
+      onInteractDoor();
+    } else if (nearbyInteractable) {
+      onInteract(nearbyInteractable);
+    }
+  };
 
   // Reset player position and atmospheric effects when room changes
   useEffect(() => {
@@ -232,7 +254,7 @@ export const GameViewport: React.FC<GameViewportProps> = ({
     for (let ty = 0; ty < room.height; ty++) {
       for (let tx = 0; tx < room.width; tx++) {
         if (tx > 0 && tx < room.width - 1 && ty > 1 && ty < room.height - 1) {
-          const floorTile = getFloorTile(room.floorType, (tx + ty) % 2);
+          const floorTile = getFloorTile(room.floorType, (tx + ty) % 2, room.id);
           bgCtx.drawImage(floorTile, tx * TILE_SIZE, ty * TILE_SIZE);
         }
       }
@@ -243,9 +265,9 @@ export const GameViewport: React.FC<GameViewportProps> = ({
       if (!deco.solid && deco.type === 'rug') {
         const w = (deco.width || 3) * TILE_SIZE;
         const h = (deco.height || 2) * TILE_SIZE;
-        bgCtx.fillStyle = '#7c2d12';
+        bgCtx.fillStyle = room.id === 'room-3' ? '#831843' : (room.id === 'room-2' ? '#78350f' : '#7c2d12');
         bgCtx.fillRect(deco.x * TILE_SIZE, deco.y * TILE_SIZE, w, h);
-        bgCtx.fillStyle = '#b45309';
+        bgCtx.fillStyle = room.id === 'room-3' ? '#f472b6' : (room.id === 'room-2' ? '#f59e0b' : '#b45309');
         bgCtx.strokeRect(deco.x * TILE_SIZE + 1.5, deco.y * TILE_SIZE + 1.5, w - 3, h - 3);
         bgCtx.fillStyle = '#fef08a';
         bgCtx.fillRect(deco.x * TILE_SIZE + w / 2 - 4, deco.y * TILE_SIZE + h / 2 - 4, 8, 8);
@@ -254,18 +276,18 @@ export const GameViewport: React.FC<GameViewportProps> = ({
 
     // 3. Draw North Walls & Windows
     for (let tx = 0; tx < room.width; tx++) {
-      bgCtx.drawImage(getWallTile(true), tx * TILE_SIZE, 0);
-      bgCtx.drawImage(getWallTile(false), tx * TILE_SIZE, TILE_SIZE);
+      bgCtx.drawImage(getWallTile(true, room.id), tx * TILE_SIZE, 0);
+      bgCtx.drawImage(getWallTile(false, room.id), tx * TILE_SIZE, TILE_SIZE);
     }
 
     // Draw East & West Wall boundaries
     for (let ty = 2; ty < room.height; ty++) {
-      bgCtx.drawImage(getWallTile(false), 0, ty * TILE_SIZE);
-      bgCtx.drawImage(getWallTile(false), (room.width - 1) * TILE_SIZE, ty * TILE_SIZE);
+      bgCtx.drawImage(getWallTile(false, room.id), 0, ty * TILE_SIZE);
+      bgCtx.drawImage(getWallTile(false, room.id), (room.width - 1) * TILE_SIZE, ty * TILE_SIZE);
     }
     // Draw South Wall boundary
     for (let tx = 0; tx < room.width; tx++) {
-      bgCtx.drawImage(getWallTile(false), tx * TILE_SIZE, (room.height - 1) * TILE_SIZE);
+      bgCtx.drawImage(getWallTile(false, room.id), tx * TILE_SIZE, (room.height - 1) * TILE_SIZE);
     }
 
     bgCanvasRef.current = bg;
@@ -427,20 +449,33 @@ export const GameViewport: React.FC<GameViewportProps> = ({
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
       ctx.save();
-      // Center camera on player
-      const viewW = canvas.width / SCALE;
-      const viewH = canvas.height / SCALE;
-      const camX = Math.round(player.x + 8 - viewW / 2);
-      const camY = Math.round(player.y + 12 - viewH / 2);
+      // Center camera on player with widescreen room boundary centering
+      const currentScale = device.scale || DEFAULT_SCALE;
+      const viewW = canvas.width / currentScale;
+      const viewH = canvas.height / currentScale;
 
-      // Clamp camera to room boundaries
-      const maxCamX = Math.max(0, room.width * TILE_SIZE - viewW);
-      const maxCamY = Math.max(0, room.height * TILE_SIZE - viewH);
-      const clampedCamX = Math.max(0, Math.min(camX, maxCamX));
-      const clampedCamY = Math.max(0, Math.min(camY, maxCamY));
+      let camTranslateX: number;
+      if (viewW >= room.width * TILE_SIZE) {
+        // Room is narrower than viewport -> center horizontally
+        camTranslateX = Math.round((viewW - room.width * TILE_SIZE) / 2);
+      } else {
+        const camX = Math.round(player.x + 8 - viewW / 2);
+        const maxCamX = room.width * TILE_SIZE - viewW;
+        camTranslateX = -Math.max(0, Math.min(camX, maxCamX));
+      }
 
-      ctx.scale(SCALE, SCALE);
-      ctx.translate(-clampedCamX, -clampedCamY);
+      let camTranslateY: number;
+      if (viewH >= room.height * TILE_SIZE) {
+        // Room is shorter than viewport -> center vertically
+        camTranslateY = Math.round((viewH - room.height * TILE_SIZE) / 2);
+      } else {
+        const camY = Math.round(player.y + 12 - viewH / 2);
+        const maxCamY = room.height * TILE_SIZE - viewH;
+        camTranslateY = -Math.max(0, Math.min(camY, maxCamY));
+      }
+
+      ctx.scale(currentScale, currentScale);
+      ctx.translate(camTranslateX, camTranslateY);
 
       // 1. Draw Pre-rendered Room Background in 1 lightning-fast call!
       if (bgCanvasRef.current) {
@@ -454,7 +489,7 @@ export const GameViewport: React.FC<GameViewportProps> = ({
       atmosphereRef.current.drawCandlesAndLanterns(ctx, TILE_SIZE);
 
       // 2. Draw Door
-      const doorSprite = getDoorSprite(isDoorUnlocked, room.exitDoor.targetIcon);
+      const doorSprite = getDoorSprite(isDoorUnlocked, room.exitDoor.targetIcon, room.id);
       ctx.drawImage(doorSprite, room.exitDoor.x * TILE_SIZE, (room.exitDoor.y - 1) * TILE_SIZE);
 
       // 3. Y-SORTED OBJECTS & CHARACTERS
@@ -502,7 +537,7 @@ export const GameViewport: React.FC<GameViewportProps> = ({
           renderList.push({
             y: deco.y * TILE_SIZE + h,
             render: () => {
-              const decoSprite = getDecorationSprite(deco.type);
+              const decoSprite = getDecorationSprite(deco.type, room.id);
               ctx.drawImage(decoSprite, deco.x * TILE_SIZE, deco.y * TILE_SIZE, w, h);
             },
           });
@@ -550,21 +585,40 @@ export const GameViewport: React.FC<GameViewportProps> = ({
 
     animId = requestAnimationFrame(gameLoop);
     return () => cancelAnimationFrame(animId);
-  }, [room, characterId, isDoorUnlocked, completedMinigames, isLocked, debugMode, isSolid]);
+  }, [
+    room,
+    characterId,
+    isDoorUnlocked,
+    completedMinigames,
+    isLocked,
+    debugMode,
+    isSolid,
+    device.scale,
+    device.canvasWidth,
+    device.canvasHeight,
+  ]);
 
   return (
-    <div className="relative flex flex-col items-center justify-center w-full max-w-4xl bg-black border-4 border-slate-800 shadow-2xl overflow-hidden">
+    <div
+      className={`relative flex flex-col items-center justify-center w-full transition-all bg-black border-4 border-slate-800 shadow-2xl overflow-hidden ${
+        device.isDesktop ? 'max-w-5xl lg:max-w-6xl 2xl:max-w-7xl' : 'max-w-xl sm:max-w-2xl'
+      }`}
+    >
       <canvas
         ref={canvasRef}
-        width={720}
-        height={480}
-        className="w-full aspect-[3/2] pixelated block cursor-default"
+        width={device.canvasWidth}
+        height={device.canvasHeight}
+        style={{
+          aspectRatio: device.aspectRatio === '16:9' ? '16 / 9' : '3 / 2',
+          maxHeight: device.isDesktop ? '76vh' : '65vh',
+        }}
+        className="w-full pixelated block cursor-default object-contain"
       />
 
       {/* Floating Pixel Interaction Prompt */}
       {!isLocked && isNearDoor && (
-        <div className="absolute top-8 bg-black/90 border-2 border-yellow-400 pixel-box-gold px-4 py-2 flex items-center gap-2 animate-bounce">
-          <span className="font-pixel text-xs text-yellow-300">
+        <div className={`absolute top-8 bg-black/90 border-2 ${theme.borderClass} ${theme.pixelBoxClass} px-4 py-2 flex items-center gap-2 animate-bounce`}>
+          <span className={`font-pixel text-xs ${theme.accentTextClass}`}>
             {isDoorUnlocked ? '[E] OPEN DOOR' : '[E] EXAMINE DOOR'}
           </span>
           <span className="text-sm">{room.targetIcon}</span>
@@ -572,9 +626,9 @@ export const GameViewport: React.FC<GameViewportProps> = ({
       )}
 
       {!isLocked && nearbyInteractable && !isNearDoor && (
-        <div className="absolute top-8 bg-black/90 border-2 border-cyan-400 pixel-box px-4 py-2 flex items-center gap-2 animate-bounce">
-          <span className="font-pixel text-xs text-cyan-300">
-            [E] INTERACT WITH {nearbyInteractable.name.toUpperCase()}
+        <div className={`absolute top-8 bg-black/90 border-2 ${theme.borderClass} ${theme.pixelBoxClass} px-4 py-2 flex items-center gap-2 animate-bounce`}>
+          <span className={`font-pixel text-xs ${theme.accentTextClass}`}>
+            [E] {nearbyInteractable.name.toUpperCase()}
           </span>
           <span className="font-kana text-sm text-yellow-400 font-bold bg-indigo-950 px-1 border border-indigo-400">
             {nearbyInteractable.rewardKana.character}
@@ -582,19 +636,129 @@ export const GameViewport: React.FC<GameViewportProps> = ({
         </div>
       )}
 
+      {/* Virtual D-Pad (Mobile / Touch Controls) */}
+      {!isLocked && showTouchControls && (
+        <div className="absolute bottom-11 left-2 sm:left-4 z-30 flex flex-col items-center select-none touch-none opacity-85 hover:opacity-100 transition-opacity pointer-events-auto">
+          {/* UP */}
+          <button
+            onPointerDown={(e) => { e.preventDefault(); setVirtualKey('ArrowUp', true); }}
+            onPointerUp={() => setVirtualKey('ArrowUp', false)}
+            onPointerLeave={() => setVirtualKey('ArrowUp', false)}
+            className="w-12 h-10 bg-slate-900/90 active:bg-indigo-600 border-2 border-slate-600 active:border-yellow-400 text-yellow-300 font-pixel text-xs flex items-center justify-center shadow-lg active:scale-95 cursor-pointer"
+          >
+            ▲
+          </button>
+          <div className="flex gap-1 my-0.5">
+            {/* LEFT */}
+            <button
+              onPointerDown={(e) => { e.preventDefault(); setVirtualKey('ArrowLeft', true); }}
+              onPointerUp={() => setVirtualKey('ArrowLeft', false)}
+              onPointerLeave={() => setVirtualKey('ArrowLeft', false)}
+              className="w-12 h-10 bg-slate-900/90 active:bg-indigo-600 border-2 border-slate-600 active:border-yellow-400 text-yellow-300 font-pixel text-xs flex items-center justify-center shadow-lg active:scale-95 cursor-pointer"
+            >
+              ◀
+            </button>
+            <div className="w-10 h-10 bg-slate-950/80 border border-slate-800 flex items-center justify-center text-[7px] text-slate-500 font-pixel">
+              PAD
+            </div>
+            {/* RIGHT */}
+            <button
+              onPointerDown={(e) => { e.preventDefault(); setVirtualKey('ArrowRight', true); }}
+              onPointerUp={() => setVirtualKey('ArrowRight', false)}
+              onPointerLeave={() => setVirtualKey('ArrowRight', false)}
+              className="w-12 h-10 bg-slate-900/90 active:bg-indigo-600 border-2 border-slate-600 active:border-yellow-400 text-yellow-300 font-pixel text-xs flex items-center justify-center shadow-lg active:scale-95 cursor-pointer"
+            >
+              ▶
+            </button>
+          </div>
+          {/* DOWN */}
+          <button
+            onPointerDown={(e) => { e.preventDefault(); setVirtualKey('ArrowDown', true); }}
+            onPointerUp={() => setVirtualKey('ArrowDown', false)}
+            onPointerLeave={() => setVirtualKey('ArrowDown', false)}
+            className="w-12 h-10 bg-slate-900/90 active:bg-indigo-600 border-2 border-slate-600 active:border-yellow-400 text-yellow-300 font-pixel text-xs flex items-center justify-center shadow-lg active:scale-95 cursor-pointer"
+          >
+            ▼
+          </button>
+        </div>
+      )}
+
+      {/* Virtual Action Buttons (Mobile / Touch Controls) */}
+      {!isLocked && showTouchControls && (
+        <div className="absolute bottom-11 right-2 sm:right-4 z-30 flex flex-col gap-2 items-end select-none touch-none opacity-90 hover:opacity-100 transition-opacity pointer-events-auto">
+          {/* Action [E] Button */}
+          <button
+            onPointerDown={(e) => {
+              e.preventDefault();
+              handleVirtualInteract();
+            }}
+            className={`px-4 py-3 border-2 font-pixel text-xs font-bold shadow-xl active:scale-95 flex items-center gap-1.5 cursor-pointer ${
+              isNearDoor
+                ? 'bg-yellow-500/95 hover:bg-yellow-400 border-white text-black animate-pulse'
+                : nearbyInteractable
+                ? 'bg-cyan-500/95 hover:bg-cyan-400 border-white text-black animate-pulse'
+                : 'bg-slate-900/90 border-slate-600 text-slate-300'
+            }`}
+          >
+            <span>[E]</span>
+            <span>
+              {isNearDoor ? (isDoorUnlocked ? 'OPEN' : 'EXAMINE') : nearbyInteractable ? 'PLAY' : 'ACTION'}
+            </span>
+          </button>
+
+          {/* Bag [I] Button */}
+          <button
+            onPointerDown={(e) => {
+              e.preventDefault();
+              sounds.playSelect();
+              onOpenInventory();
+            }}
+            className="px-3.5 py-2 bg-indigo-700/90 hover:bg-indigo-600 border-2 border-indigo-300 text-white font-pixel text-[10px] shadow-lg active:scale-95 cursor-pointer flex items-center gap-1"
+          >
+            <span>🎒</span>
+            <span>BAG [I]</span>
+          </button>
+        </div>
+      )}
+
       {/* Controls Bar at bottom of screen */}
       {!isLocked && (
-        <div className="absolute bottom-2 left-2 right-2 flex justify-between items-center text-[10px] font-pixel text-slate-400 bg-black/70 px-3 py-1 border border-slate-700/60 pointer-events-none">
-          <span>Arrow Keys / WASD = Move</span>
-          <span>[E] = Interact</span>
-          <span>[I] = Word Builder</span>
-          <span>[ESC] = Pause</span>
+        <div className="absolute bottom-1 left-2 right-2 flex justify-between items-center text-[9px] sm:text-[10px] font-pixel text-slate-400 bg-black/85 backdrop-blur-xs px-2 sm:px-3 py-1 border border-slate-700/60 z-20 gap-2">
+          <span className="hidden sm:inline">WASD/Arrows = Move • [E] = Interact • [I] = Bag</span>
+          <span className="sm:hidden text-amber-300/80">Kana Escape</span>
+
+          <div className="flex items-center gap-1.5 ml-auto pointer-events-auto">
+            {/* Aspect Ratio / Device Mode Switcher */}
+            <button
+              onClick={() => {
+                sounds.playSelect();
+                device.togglePreference();
+              }}
+              title="Switch Screen Ratio: Auto, PC Widescreen (16:9), or Mobile (3:2)"
+              className="px-2 py-0.5 bg-slate-900/90 hover:bg-slate-800 active:bg-slate-700 text-cyan-300 border border-cyan-700/70 rounded text-[8px] sm:text-[9px] cursor-pointer flex items-center gap-1 shadow"
+            >
+              <span>{device.isDesktop ? '🖥️' : '📱'}</span>
+              <span>{device.aspectRatio}</span>
+              <span className="text-[7px] text-slate-400">({device.preference.toUpperCase()})</span>
+            </button>
+
+            {/* D-Pad Toggle */}
+            <button
+              onClick={() => {
+                sounds.playSelect();
+                setShowTouchControls((prev) => !prev);
+              }}
+              className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-amber-300 border border-slate-600 rounded text-[8px] sm:text-[9px] cursor-pointer"
+            >
+              🎮 D-PAD: {showTouchControls ? 'ON' : 'OFF'}
+            </button>
+          </div>
         </div>
       )}
 
       {/* Debug Keys Indicator */}
       {debugMode && (
-        <div className="absolute top-2 left-2 bg-red-950/90 border border-red-500 text-red-200 text-[9px] font-mono p-2">
+        <div className="absolute top-2 left-2 bg-red-950/90 border border-red-500 text-red-200 text-[9px] font-mono p-2 z-40">
           <div>[DEBUG MODE ACTIVE]</div>
           <div>F1: Toggle Collision Boxes</div>
           <div>F3: Give All Kana</div>

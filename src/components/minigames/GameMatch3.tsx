@@ -68,30 +68,18 @@ export const GameMatch3: React.FC<GameMatch3Props> = ({ onSuccess, targetScore =
     return g;
   }
 
-  const spawnParticles = (x: number, y: number, color: string, count = 10, speed = 3.5) => {
-    for (let i = 0; i < count; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const spd = (Math.random() * 0.7 + 0.3) * speed;
-      particlesRef.current.push({
-        x,
-        y,
-        vx: Math.cos(angle) * spd,
-        vy: Math.sin(angle) * spd,
-        life: 0,
-        maxLife: 20 + Math.random() * 15,
-        color,
-        size: Math.random() * 3 + 2,
-      });
-    }
-  };
+  const isLoopRunningRef = useRef(false);
+  const animIdRef = useRef<number | null>(null);
 
-  useEffect(() => {
+  const startParticleLoop = useCallback(() => {
+    if (isLoopRunningRef.current) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    let animId: number;
+    isLoopRunningRef.current = true;
+
     const loop = () => {
       ctx.clearRect(0, 0, 260, 260);
 
@@ -112,11 +100,40 @@ export const GameMatch3: React.FC<GameMatch3Props> = ({ onSuccess, targetScore =
         }
       }
 
-      animId = requestAnimationFrame(loop);
+      if (particlesRef.current.length > 0) {
+        animIdRef.current = requestAnimationFrame(loop);
+      } else {
+        ctx.clearRect(0, 0, 260, 260);
+        isLoopRunningRef.current = false;
+        animIdRef.current = null;
+      }
     };
 
-    animId = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(animId);
+    animIdRef.current = requestAnimationFrame(loop);
+  }, []);
+
+  const spawnParticles = (x: number, y: number, color: string, count = 10, speed = 3.5) => {
+    for (let i = 0; i < count; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const spd = (Math.random() * 0.7 + 0.3) * speed;
+      particlesRef.current.push({
+        x,
+        y,
+        vx: Math.cos(angle) * spd,
+        vy: Math.sin(angle) * spd,
+        life: 0,
+        maxLife: 20 + Math.random() * 15,
+        color,
+        size: Math.random() * 3 + 2,
+      });
+    }
+    startParticleLoop();
+  };
+
+  useEffect(() => {
+    return () => {
+      if (animIdRef.current) cancelAnimationFrame(animIdRef.current);
+    };
   }, []);
 
   const findMatchesAndSpecials = (g: number[][]) => {
@@ -250,22 +267,11 @@ export const GameMatch3: React.FC<GameMatch3Props> = ({ onSuccess, targetScore =
     []
   );
 
-  const handleCellClick = (r: number, c: number) => {
+  const touchStartRef = useRef<{ r: number; c: number; x: number; y: number } | null>(null);
+
+  const swapCells = (sr: number, sc: number, r: number, c: number) => {
     if (won) return;
-
-    if (!selectedCell) {
-      sounds.playSelect();
-      setSelectedCell({ r, c });
-      return;
-    }
-
-    const { r: sr, c: sc } = selectedCell;
-    const isAdjacent = Math.abs(sr - r) + Math.abs(sc - c) === 1;
-
-    if (!isAdjacent) {
-      setSelectedCell({ r, c });
-      return;
-    }
+    if (r < 0 || r >= ROWS || c < 0 || c >= COLS) return;
 
     sounds.playBlip(540);
     const swapped = grid.map((row) => [...row]);
@@ -305,6 +311,55 @@ export const GameMatch3: React.FC<GameMatch3Props> = ({ onSuccess, targetScore =
     }
   };
 
+  const handleCellClick = (r: number, c: number) => {
+    if (won) return;
+
+    if (!selectedCell) {
+      sounds.playSelect();
+      setSelectedCell({ r, c });
+      return;
+    }
+
+    const { r: sr, c: sc } = selectedCell;
+    const isAdjacent = Math.abs(sr - r) + Math.abs(sc - c) === 1;
+
+    if (!isAdjacent) {
+      setSelectedCell({ r, c });
+      return;
+    }
+
+    swapCells(sr, sc, r, c);
+  };
+
+  const handleTouchStartCell = (e: React.TouchEvent, r: number, c: number) => {
+    if (won || e.touches.length === 0) return;
+    touchStartRef.current = { r, c, x: e.touches[0].clientX, y: e.touches[0].clientY };
+  };
+
+  const handleTouchEndCell = (e: React.TouchEvent, r: number, c: number) => {
+    if (!touchStartRef.current || won) return;
+    const start = touchStartRef.current;
+    touchStartRef.current = null;
+
+    if (e.changedTouches.length === 0) return;
+    const endTouch = e.changedTouches[0];
+    const dx = endTouch.clientX - start.x;
+    const dy = endTouch.clientY - start.y;
+
+    if (Math.abs(dx) > 18 || Math.abs(dy) > 18) {
+      let targetR = start.r;
+      let targetC = start.c;
+      if (Math.abs(dx) > Math.abs(dy)) {
+        targetC += dx > 0 ? 1 : -1;
+      } else {
+        targetR += dy > 0 ? 1 : -1;
+      }
+      if (targetR >= 0 && targetR < ROWS && targetC >= 0 && targetC < COLS) {
+        swapCells(start.r, start.c, targetR, targetC);
+      }
+    }
+  };
+
   const checkWin = (s: number) => {
     if (s >= targetScore && !won) {
       setWon(true);
@@ -314,59 +369,63 @@ export const GameMatch3: React.FC<GameMatch3Props> = ({ onSuccess, targetScore =
   };
 
   return (
-    <div className="flex flex-col items-center select-none font-pixel w-full max-w-xs">
-      <div className="flex justify-between items-center w-full mb-2 text-xs">
-        <span className="text-amber-400">SCORE: {score}</span>
-        <span className="text-emerald-400 text-[10px]">GOAL: {targetScore}</span>
+    <div className="flex flex-col items-center select-none font-pixel w-full max-w-[520px]">
+      <div className="flex justify-between items-center w-full mb-2 text-xs sm:text-sm">
+        <span className="text-amber-400 font-bold">SCORE: {score}</span>
+        <span className="text-emerald-400 font-bold">GOAL: {targetScore}</span>
       </div>
 
-      <div className="bg-slate-950 p-2.5 border-4 border-slate-700 shadow-2xl relative">
-        <canvas
-          ref={canvasRef}
-          width={260}
-          height={260}
-          className="absolute inset-0 pointer-events-none z-20"
-        />
+      <div className="bg-slate-950 p-3 sm:p-5 border-4 border-slate-700 shadow-2xl relative w-full flex flex-col items-center">
+        <div className="relative w-72 h-72 sm:w-84 sm:h-84 md:w-96 md:h-96">
+          <canvas
+            ref={canvasRef}
+            width={260}
+            height={260}
+            className="absolute inset-0 w-full h-full pointer-events-none z-20"
+          />
 
-        <div className="grid grid-cols-6 gap-1 bg-slate-900 border border-slate-800 p-1">
-          {grid.flatMap((row, r) =>
-            row.map((val, c) => {
-              const isSelected = selectedCell?.r === r && selectedCell?.c === c;
-              const tile = TILES[val] || TILES[0];
-              const special = specialGrid[r][c];
+          <div className="grid grid-cols-6 gap-1.5 sm:gap-2 w-full h-full bg-slate-900 border border-slate-800 p-1.5 sm:p-2 rounded">
+            {grid.flatMap((row, r) =>
+              row.map((val, c) => {
+                const isSelected = selectedCell?.r === r && selectedCell?.c === c;
+                const tile = TILES[val] || TILES[0];
+                const special = specialGrid[r][c];
 
-              return (
-                <button
-                  key={`${r}-${c}-${val}-${special}`}
-                  onClick={() => handleCellClick(r, c)}
-                  className={`w-9 h-9 border-2 flex items-center justify-center font-kana text-lg font-bold cursor-pointer transition-all duration-200 relative animate-in slide-in-from-top-4 ${
-                    tile.color
-                  } ${
-                    isSelected
-                      ? 'scale-110 border-white ring-2 ring-yellow-400 z-10 shadow-lg'
-                      : 'hover:opacity-90 active:scale-95'
-                  }`}
-                >
-                  {tile.char}
-                  {special === 'LINE_BOMB' && (
-                    <span className="absolute -top-1 -right-1 text-[10px] animate-bounce">⚡</span>
-                  )}
-                  {special === 'RAINBOW' && (
-                    <span className="absolute -top-1 -right-1 text-[10px] animate-spin">🌈</span>
-                  )}
-                </button>
-              );
-            })
-          )}
+                return (
+                  <button
+                    key={`${r}-${c}-${val}-${special}`}
+                    onClick={() => handleCellClick(r, c)}
+                    onTouchStart={(e) => handleTouchStartCell(e, r, c)}
+                    onTouchEnd={(e) => handleTouchEndCell(e, r, c)}
+                    className={`w-full h-full aspect-square border-2 rounded flex items-center justify-center font-kana text-xl sm:text-2xl md:text-3xl font-bold cursor-pointer transition-all duration-200 relative animate-in slide-in-from-top-4 touch-manipulation ${
+                      tile.color
+                    } ${
+                      isSelected
+                        ? 'scale-110 border-white ring-2 ring-yellow-400 z-10 shadow-lg'
+                        : 'hover:opacity-90 active:scale-95'
+                    }`}
+                  >
+                    {tile.char}
+                    {special === 'LINE_BOMB' && (
+                      <span className="absolute -top-1 -right-1 text-xs sm:text-sm animate-bounce">⚡</span>
+                    )}
+                    {special === 'RAINBOW' && (
+                      <span className="absolute -top-1 -right-1 text-xs sm:text-sm animate-spin">🌈</span>
+                    )}
+                  </button>
+                );
+              })
+            )}
+          </div>
         </div>
 
         {won && (
           <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center border-2 border-emerald-400 p-4 animate-in fade-in z-30">
-            <span className="text-emerald-400 text-sm mb-1 font-bold">★ CONDUIT ENERGIZED! ★</span>
-            <span className="text-[10px] text-slate-300 mb-3">Power-up combos unlocked!</span>
+            <span className="text-emerald-400 text-base sm:text-lg mb-2 font-bold">★ CONDUIT ENERGIZED! ★</span>
+            <span className="text-xs sm:text-sm text-slate-300 mb-4 text-center">Power-up combos unlocked!</span>
             <button
               onClick={() => onSuccessRef.current()}
-              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold border-2 border-white cursor-pointer"
+              className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black text-xs sm:text-sm font-bold border-2 border-white cursor-pointer shadow-lg"
             >
               CLAIM REWARD NOW
             </button>
@@ -374,7 +433,7 @@ export const GameMatch3: React.FC<GameMatch3Props> = ({ onSuccess, targetScore =
         )}
       </div>
 
-      <p className="text-[9px] text-slate-400 mt-2 text-center">
+      <p className="text-[10px] sm:text-xs text-slate-400 mt-3 text-center">
         Match 4 for ⚡ Line Bomb • Match 5 for 🌈 Rainbow Supernova!
       </p>
     </div>

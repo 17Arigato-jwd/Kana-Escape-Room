@@ -214,6 +214,13 @@ export const GameEndingModal: React.FC<GameEndingModalProps> = ({
                           </span>
                         </div>
                       </div>
+                      <button
+                        onClick={() => sounds.speakJapanese(info?.word || w)}
+                        title="Listen to Japanese pronunciation"
+                        className="px-1.5 py-0.5 bg-slate-800 hover:bg-slate-700 text-yellow-300 border border-slate-600 rounded text-[10px] cursor-pointer ml-2"
+                      >
+                        🔊
+                      </button>
                       {w === 'でぐち' && (
                         <span className="font-pixel text-[7px] bg-emerald-950 text-emerald-300 border border-emerald-500 px-1 py-0.5 rounded-xs shrink-0">
                           EXIT

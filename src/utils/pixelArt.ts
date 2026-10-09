@@ -513,14 +513,58 @@ export function getCharacterSprite(
 /**
  * Generates floor tile (16x16)
  */
-export function getFloorTile(type: 'wood' | 'stone' | 'carpet_tatami', variant: number = 0): HTMLCanvasElement {
-  const key = `floor_${type}_${variant}`;
+export function getFloorTile(type: 'wood' | 'stone' | 'carpet_tatami', variant: number = 0, roomId: string = 'room-1'): HTMLCanvasElement {
+  const key = `floor_${type}_${variant}_${roomId}`;
   if (assetCache.has(key)) return assetCache.get(key)!;
 
   const { canvas, ctx } = createCrispCanvas(16, 16);
 
-  if (type === 'wood') {
-    // Parquet polished wood planks
+  if (roomId === 'room-3' || type === 'carpet_tatami') {
+    // Authentic Japanese Tatami Mats (畳)
+    // Straw weave background
+    ctx.fillStyle = variant % 2 === 0 ? '#4d7c0f' : '#3f6212';
+    ctx.fillRect(0, 0, 16, 16);
+
+    // Fine straw reed texture lines
+    ctx.fillStyle = variant % 2 === 0 ? '#65a30d' : '#4d7c0f';
+    for (let y = 0; y < 16; y += 2) {
+      ctx.fillRect(0, y, 16, 1);
+    }
+
+    // Traditional dark fabric border binding (Tatami-beri 縁)
+    ctx.fillStyle = '#0f172a'; // Deep indigo / black cloth
+    ctx.fillRect(0, 0, 2, 16);
+    ctx.fillRect(14, 0, 2, 16);
+    // Subtle diamond pattern on cloth border
+    ctx.fillStyle = '#1e3a8a';
+    ctx.fillRect(0, 4, 2, 2);
+    ctx.fillRect(0, 10, 2, 2);
+    ctx.fillRect(14, 4, 2, 2);
+    ctx.fillRect(14, 10, 2, 2);
+
+  } else if (roomId === 'room-2' || type === 'stone') {
+    // Ancient Ryokan Library stone flagstones with subtle moss
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(0, 0, 16, 16);
+
+    ctx.fillStyle = '#1e293b';
+    ctx.strokeRect(0.5, 0.5, 15, 15);
+    ctx.fillRect(8, 0, 1, 16);
+
+    // Stone flecks and moss
+    ctx.fillStyle = '#475569';
+    ctx.fillRect(2, 3, 2, 2);
+    ctx.fillRect(11, 9, 3, 2);
+    ctx.fillStyle = '#14532d'; // subtle ancient moss
+    ctx.fillRect(3, 11, 2, 2);
+    ctx.fillRect(10, 2, 2, 1);
+
+    ctx.fillStyle = '#64748b';
+    ctx.fillRect(3, 4, 1, 1);
+    ctx.fillRect(12, 10, 1, 1);
+
+  } else {
+    // Room 1: Akihabara Parquet Polished Cedar Plank Wood
     ctx.fillStyle = variant % 2 === 0 ? '#b45309' : '#92400e';
     ctx.fillRect(0, 0, 16, 16);
 
@@ -537,40 +581,6 @@ export function getFloorTile(type: 'wood' | 'stone' | 'carpet_tatami', variant: 
     ctx.fillRect(2, 2, 4, 1);
     ctx.fillRect(10, 4, 5, 1);
     ctx.fillRect(6, 11, 6, 1);
-
-  } else if (type === 'stone') {
-    // Stone dungeon / archive flagstones
-    ctx.fillStyle = '#334155';
-    ctx.fillRect(0, 0, 16, 16);
-
-    ctx.fillStyle = '#1e293b';
-    ctx.strokeRect(0.5, 0.5, 15, 15);
-    ctx.fillRect(8, 0, 1, 16);
-
-    // Stone flecks
-    ctx.fillStyle = '#475569';
-    ctx.fillRect(2, 3, 2, 2);
-    ctx.fillRect(11, 9, 3, 2);
-    ctx.fillRect(3, 11, 2, 2);
-
-    ctx.fillStyle = '#64748b';
-    ctx.fillRect(3, 4, 1, 1);
-    ctx.fillRect(12, 10, 1, 1);
-
-  } else {
-    // Tatami / Green Japanese carpet weave
-    ctx.fillStyle = '#22543d';
-    ctx.fillRect(0, 0, 16, 16);
-
-    // Woven pattern lines
-    ctx.fillStyle = '#2f855a';
-    for (let y = 0; y < 16; y += 2) {
-      ctx.fillRect(0, y, 16, 1);
-    }
-    // Darker borders
-    ctx.fillStyle = '#1c4532';
-    ctx.fillRect(0, 0, 1, 16);
-    ctx.fillRect(15, 0, 1, 16);
   }
 
   assetCache.set(key, canvas);
@@ -580,39 +590,96 @@ export function getFloorTile(type: 'wood' | 'stone' | 'carpet_tatami', variant: 
 /**
  * Generates wall tile (16x16)
  */
-export function getWallTile(isTop: boolean = false): HTMLCanvasElement {
-  const key = `wall_${isTop}`;
+export function getWallTile(isTop: boolean = false, roomId: string = 'room-1'): HTMLCanvasElement {
+  const key = `wall_${isTop}_${roomId}`;
   if (assetCache.has(key)) return assetCache.get(key)!;
 
   const { canvas, ctx } = createCrispCanvas(16, 16);
 
-  if (isTop) {
-    // Wall roof top border
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(0, 0, 16, 16);
-    ctx.fillStyle = '#1e1b4b';
-    ctx.fillRect(0, 0, 16, 4);
-    ctx.fillStyle = '#312e81';
-    ctx.fillRect(0, 4, 16, 12);
+  if (roomId === 'room-3') {
+    // Room 3: Vermillion Shrine Walls (神社・朱塗り)
+    if (isTop) {
+      // Curved shrine eaves / black lacquer tile cap
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, 16, 6);
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(0, 2, 16, 2);
+      // Vermillion beam (Nageshi 長押)
+      ctx.fillStyle = '#b91c1c';
+      ctx.fillRect(0, 6, 16, 10);
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(0, 6, 16, 2);
+    } else {
+      // White plaster (Shikkui 漆喰) with Vermillion lacquered timber pillars
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(0, 0, 16, 16);
+      // Vermillion vertical shrine post
+      ctx.fillStyle = '#b91c1c';
+      ctx.fillRect(0, 0, 3, 16);
+      ctx.fillRect(13, 0, 3, 16);
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(1, 0, 1, 16);
+      // Shrine timber baseboard
+      ctx.fillStyle = '#7f1d1d';
+      ctx.fillRect(0, 13, 16, 3);
+    }
+  } else if (roomId === 'room-2') {
+    // Room 2: Traditional Shoji Screen & Cedar Timber Walls (書院・障子)
+    if (isTop) {
+      // Cedar crown beam with Ranma transom lattice
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(0, 0, 16, 5);
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(0, 5, 16, 11);
+      ctx.fillStyle = '#b45309';
+      ctx.fillRect(0, 5, 16, 2);
+    } else {
+      // Shoji paper lattice wall panels
+      ctx.fillStyle = '#fef3c7'; // warm translucent washi paper
+      ctx.fillRect(0, 0, 16, 16);
+      // Dark cedar grid (Kumiko 組子)
+      ctx.fillStyle = '#78350f';
+      ctx.strokeRect(0.5, 0.5, 15, 15);
+      ctx.fillRect(7, 0, 2, 16);
+      ctx.fillRect(0, 7, 16, 2);
+      // Cedar baseboard
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(0, 14, 16, 2);
+    }
   } else {
-    // Lower wall with decorative baseboard
-    ctx.fillStyle = '#1e293b';
-    ctx.fillRect(0, 0, 16, 16);
-
-    // Vertical wallpaper / brick panels
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(0, 0, 1, 14);
-    ctx.fillRect(8, 0, 1, 14);
-
-    // Wall moulding highlight
-    ctx.fillStyle = '#334155';
-    ctx.fillRect(0, 0, 16, 2);
-
-    // Baseboard
-    ctx.fillStyle = '#475569';
-    ctx.fillRect(0, 13, 16, 3);
-    ctx.fillStyle = '#0f172a';
-    ctx.fillRect(0, 12, 16, 1);
+    // Room 1: Cyber Akihabara Workshop Walls (電脳工房)
+    if (isTop) {
+      // Dark cyber roof border with glowing neon cyan conduit
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, 16, 16);
+      ctx.fillStyle = '#1e1b4b';
+      ctx.fillRect(0, 0, 16, 4);
+      ctx.fillStyle = '#312e81';
+      ctx.fillRect(0, 4, 16, 8);
+      // Glowing neon conduit wire
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(0, 12, 16, 2);
+      ctx.fillStyle = '#0284c7';
+      ctx.fillRect(0, 14, 16, 2);
+    } else {
+      // Cyber brick panel with exposed cables
+      ctx.fillStyle = '#1e1b4b';
+      ctx.fillRect(0, 0, 16, 16);
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 0, 1, 14);
+      ctx.fillRect(8, 0, 1, 14);
+      ctx.fillStyle = '#312e81';
+      ctx.fillRect(0, 0, 16, 2);
+      // Yellow hazard / tech line
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(2, 6, 4, 1);
+      ctx.fillRect(10, 10, 4, 1);
+      // Baseboard
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(0, 13, 16, 3);
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(0, 12, 16, 1);
+    }
   }
 
   assetCache.set(key, canvas);
@@ -620,63 +687,234 @@ export function getWallTile(isTop: boolean = false): HTMLCanvasElement {
 }
 
 /**
- * Generates an exit door sprite (32x32)
+ * Generates an exit door sprite (32x32) tailored to each room's Japanese theme
  */
-export function getDoorSprite(isUnlocked: boolean, clueIcon: string = '🔑'): HTMLCanvasElement {
-  const key = `door_${isUnlocked}_${clueIcon}`;
+export function getDoorSprite(isUnlocked: boolean, clueIcon: string = '🔑', roomId: string = 'room-1'): HTMLCanvasElement {
+  const key = `door_${isUnlocked}_${clueIcon}_${roomId}`;
   if (assetCache.has(key)) return assetCache.get(key)!;
 
   const { canvas, ctx } = createCrispCanvas(32, 32);
 
-  // Door Frame
-  ctx.fillStyle = '#1e1b4b';
-  ctx.fillRect(0, 0, 32, 32);
-  ctx.fillStyle = '#475569';
-  ctx.fillRect(2, 2, 28, 30);
+  if (roomId === 'room-3') {
+    // ==========================================
+    // ROOM 3: MAJESTIC VERMILLION TORII GATE (鳥居)
+    // ==========================================
+    // Background glow/portal
+    if (isUnlocked) {
+      // Radiant Celestial Spirit Gateway
+      const grad = ctx.createRadialGradient(16, 18, 2, 16, 18, 16);
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(0.3, '#fef08a');
+      grad.addColorStop(0.7, '#38bdf8');
+      grad.addColorStop(1, 'rgba(30, 27, 75, 0.4)');
+      ctx.fillStyle = grad;
+      ctx.fillRect(4, 8, 24, 24);
 
-  // Door Leaves
-  if (isUnlocked) {
-    // Glowing unlocked door opening outward with magical light
+      // Ascension sparkles
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(14, 12, 4, 4);
+      ctx.fillRect(9, 18, 3, 3);
+      ctx.fillRect(20, 20, 3, 3);
+      ctx.fillRect(15, 24, 2, 2);
+    } else {
+      // Moonlit spirit barrier (sealed)
+      ctx.fillStyle = '#1e1b4b';
+      ctx.fillRect(4, 8, 24, 24);
+      ctx.fillStyle = 'rgba(220, 38, 38, 0.25)';
+      ctx.fillRect(6, 10, 20, 22);
+
+      // Talisman seal ropes crisscross
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(6, 10);
+      ctx.lineTo(26, 30);
+      ctx.moveTo(26, 10);
+      ctx.lineTo(6, 30);
+      ctx.stroke();
+    }
+
+    // --- TORII ARCHITECTURE ---
+    // Stone plinth bases (Kamebara 亀腹)
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(2, 28, 6, 4);
+    ctx.fillRect(24, 28, 6, 4);
+
+    // Vermillion Pillars (Hashira 柱)
+    ctx.fillStyle = '#b91c1c';
+    ctx.fillRect(3, 4, 4, 24);
+    ctx.fillRect(25, 4, 4, 24);
+    ctx.fillStyle = '#dc2626'; // Highlight on front
+    ctx.fillRect(4, 4, 2, 24);
+    ctx.fillRect(26, 4, 2, 24);
+
+    // Second horizontal tie-beam (Nuki 貫)
+    ctx.fillStyle = '#991b1b';
+    ctx.fillRect(1, 10, 30, 3);
+    ctx.fillStyle = '#dc2626';
+    ctx.fillRect(2, 10, 28, 1);
+
+    // Center vertical strut (Gakuzuka 額束) with Seal Plaque
+    ctx.fillStyle = '#7f1d1d';
+    ctx.fillRect(14, 4, 4, 7);
+    ctx.fillStyle = '#fef3c7'; // Wooden tablet
+    ctx.fillRect(13, 5, 6, 5);
+    ctx.fillStyle = '#b91c1c';
+    ctx.fillRect(15, 6, 2, 3); // Miniature kanji symbol
+
+    // Top curved lintel (Kasagi 笠木 & Shimaki 島木)
+    ctx.fillStyle = '#b91c1c';
+    ctx.fillRect(0, 3, 32, 4);
+    ctx.fillStyle = '#ef4444';
+    ctx.fillRect(1, 3, 30, 1);
+    // Black roof tile cap (Kasa 笠)
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(0, 1, 32, 2);
+    ctx.fillStyle = '#334155';
+    ctx.fillRect(1, 1, 30, 1);
+
+    // Sacred Braided Rope (Shimenawa 注連縄)
+    ctx.fillStyle = '#d97706';
+    ctx.fillRect(3, 11, 26, 2);
     ctx.fillStyle = '#fef08a';
-    ctx.fillRect(4, 4, 24, 28);
+    ctx.fillRect(5, 11, 4, 1);
+    ctx.fillRect(14, 11, 4, 1);
+    ctx.fillRect(23, 11, 4, 1);
 
-    ctx.fillStyle = '#38bdf8';
-    ctx.fillRect(6, 6, 20, 26);
-
-    // Shimmer sparkles
+    // White zig-zag paper pendants (Shide 紙垂)
     ctx.fillStyle = '#ffffff';
-    ctx.fillRect(10, 10, 4, 4);
-    ctx.fillRect(18, 16, 3, 3);
-    ctx.fillRect(12, 22, 5, 2);
+    // Left Shide
+    ctx.fillRect(7, 13, 2, 2);
+    ctx.fillRect(8, 15, 2, 2);
+    ctx.fillRect(7, 17, 2, 3);
+    // Center Shide
+    ctx.fillRect(15, 13, 2, 2);
+    ctx.fillRect(16, 15, 2, 2);
+    ctx.fillRect(15, 17, 2, 3);
+    // Right Shide
+    ctx.fillRect(23, 13, 2, 2);
+    ctx.fillRect(24, 15, 2, 2);
+    ctx.fillRect(23, 17, 2, 3);
 
-    // Unlocked banner glow
-    ctx.fillStyle = '#22c55e';
-    ctx.fillRect(8, 2, 16, 3);
+  } else if (roomId === 'room-2') {
+    // ==========================================
+    // ROOM 2: TRADITIONAL SHOJI / FUSUMA SLIDING DOORS (障子・襖)
+    // ==========================================
+    // Dark Japanese cedar outer frame
+    ctx.fillStyle = '#3b1c0b';
+    ctx.fillRect(0, 0, 32, 32);
+    ctx.fillStyle = '#5c2d12';
+    ctx.fillRect(2, 2, 28, 30);
+
+    if (isUnlocked) {
+      // Doors slide open, revealing warm lantern-lit room ahead
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(6, 4, 20, 28);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(8, 6, 16, 26);
+      ctx.fillStyle = '#fffbeb';
+      ctx.fillRect(12, 10, 8, 18);
+
+      // Parted Shoji doors visible on left and right edges
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(2, 4, 6, 28);
+      ctx.fillRect(24, 4, 6, 28);
+      ctx.fillStyle = '#fef3c7';
+      ctx.fillRect(3, 6, 4, 24);
+      ctx.fillRect(25, 6, 4, 24);
+    } else {
+      // Closed Shoji sliding doors
+      ctx.fillStyle = '#fef3c7'; // Translucent washi paper panels
+      ctx.fillRect(4, 4, 24, 28);
+
+      // Cedar wood lattice grid (Kumiko 組子)
+      ctx.fillStyle = '#78350f';
+      // Center split seam between doors
+      ctx.fillRect(15, 4, 2, 28);
+      // Outer door frames
+      ctx.strokeRect(4.5, 4.5, 11, 27);
+      ctx.strokeRect(16.5, 4.5, 11, 27);
+      // Horizontal lattice bars
+      for (let y = 8; y <= 28; y += 5) {
+        ctx.fillRect(4, y, 24, 1);
+      }
+      // Vertical inner lattice
+      ctx.fillRect(9, 4, 1, 28);
+      ctx.fillRect(22, 4, 1, 28);
+
+      // Circular bronze recessed door pulls (Hikite 引手)
+      ctx.fillStyle = '#92400e';
+      ctx.beginPath();
+      ctx.arc(13, 17, 2, 0, Math.PI * 2);
+      ctx.arc(19, 17, 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Heavy wooden crossbar lock (Kannuki 閂) across the middle
+      ctx.fillStyle = '#451a03';
+      ctx.fillRect(6, 15, 20, 4);
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(7, 16, 18, 2);
+      // Iron brackets on crossbar
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(5, 14, 3, 6);
+      ctx.fillRect(24, 14, 3, 6);
+      ctx.fillRect(14, 14, 4, 6);
+    }
 
   } else {
-    // Sealed heavy door with lock plate & clue icon
+    // ==========================================
+    // ROOM 1: AKIHABARA NOREN & ELECTRONIC SHUTTER (暖簾・シャッター)
+    // ==========================================
+    // Metal arcade doorway frame
+    ctx.fillStyle = '#1e1b4b';
+    ctx.fillRect(0, 0, 32, 32);
     ctx.fillStyle = '#334155';
-    ctx.fillRect(4, 4, 24, 28);
+    ctx.fillRect(2, 2, 28, 30);
 
-    // Metal panel segments
-    ctx.fillStyle = '#1e293b';
-    ctx.strokeRect(6.5, 6.5, 19, 11);
-    ctx.strokeRect(6.5, 19.5, 19, 11);
+    if (isUnlocked) {
+      // Shutter rolled up into ceiling, bright neon passage open!
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(4, 4, 24, 28);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(6, 6, 20, 26);
+      ctx.fillStyle = '#22c55e';
+      ctx.fillRect(10, 8, 12, 3); // Green cleared indicator
 
-    // Lock Plate in center
-    ctx.fillStyle = '#d97706';
-    ctx.fillRect(12, 14, 8, 8);
-    ctx.fillStyle = '#fef08a';
-    ctx.fillRect(14, 16, 4, 4);
+      // Sparkles
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(12, 12, 3, 3);
+      ctx.fillRect(18, 18, 3, 3);
+    } else {
+      // Corrugated electronic shutter
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(4, 10, 24, 22);
+      // Horizontal shutter ridges
+      ctx.fillStyle = '#334155';
+      for (let y = 12; y < 32; y += 3) {
+        ctx.fillRect(4, y, 24, 1);
+      }
 
-    // Keyhole
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(15, 17, 2, 2);
-    ctx.fillRect(15.5, 19, 1, 1);
+      // Electronic Keypad Lock in center
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(12, 16, 8, 8);
+      ctx.fillStyle = '#d97706';
+      ctx.fillRect(13, 17, 6, 6);
+      ctx.fillStyle = '#ef4444'; // Red locked blinking LED
+      ctx.fillRect(15, 19, 2, 2);
+    }
 
-    // Red locked warning LED on top
-    ctx.fillStyle = '#ef4444';
-    ctx.fillRect(15, 2, 2, 2);
+    // Traditional Indigo Noren Curtain (暖簾) draped across top
+    ctx.fillStyle = '#1e3a8a'; // Deep Japanese Indigo (Aizome 藍染)
+    ctx.fillRect(4, 2, 24, 9);
+    // Three separate slits in Noren
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(11, 6, 1, 5);
+    ctx.fillRect(20, 6, 1, 5);
+    // White crest/kanji accent on Noren
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(7, 4, 2, 3);
+    ctx.fillRect(15, 4, 2, 3);
+    ctx.fillRect(23, 4, 2, 3);
   }
 
   assetCache.set(key, canvas);
@@ -1151,42 +1389,62 @@ export function getInteractableSprite(type: string, minigameType?: string): HTML
 /**
  * Generates decorative prop sprite
  */
-export function getDecorationSprite(type: string): HTMLCanvasElement {
-  const key = `deco_${type}`;
+export function getDecorationSprite(type: string, roomId: string = 'room-1'): HTMLCanvasElement {
+  const key = `deco_${type}_${roomId}`;
   if (assetCache.has(key)) return assetCache.get(key)!;
 
   const { canvas, ctx } = createCrispCanvas(16, 16);
 
   if (type === 'plant') {
-    // Ceramic bonsai / potted plant
-    ctx.fillStyle = '#78350f'; // pot
-    ctx.fillRect(4, 10, 8, 6);
-    ctx.fillStyle = '#92400e';
-    ctx.fillRect(3, 9, 10, 2);
+    // Authentic Japanese Bonsai Tree (盆栽)
+    // Ceramic bonsai pot
+    ctx.fillStyle = '#451a03';
+    ctx.fillRect(3, 11, 10, 5);
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(2, 10, 12, 2);
 
-    // Leaves
-    ctx.fillStyle = '#15803d';
-    ctx.fillRect(5, 4, 6, 5);
-    ctx.fillRect(3, 6, 3, 3);
-    ctx.fillRect(10, 5, 3, 3);
-    ctx.fillStyle = '#22c55e';
-    ctx.fillRect(6, 3, 4, 3);
+    // Gnarled wooden trunk & branches
+    ctx.fillStyle = '#5c2d12';
+    ctx.fillRect(7, 7, 2, 4);
+    ctx.fillRect(6, 6, 3, 2);
+    ctx.fillRect(4, 5, 3, 2);
+    ctx.fillRect(9, 5, 3, 2);
+
+    // Lush pine needle tufts
+    ctx.fillStyle = '#14532d';
+    ctx.fillRect(2, 3, 5, 3);
+    ctx.fillRect(8, 3, 6, 3);
+    ctx.fillRect(5, 1, 6, 4);
+    ctx.fillStyle = '#16a34a'; // needle highlights
+    ctx.fillRect(3, 3, 3, 1);
+    ctx.fillRect(9, 3, 4, 1);
+    ctx.fillRect(6, 2, 4, 1);
 
   } else if (type === 'window') {
-    // Japanese Shoji / Gothic Window
-    ctx.fillStyle = '#38bdf8';
+    // Traditional Japanese Shoji Screen Window (障子窓)
+    ctx.fillStyle = roomId === 'room-3' ? '#fbcfe8' : (roomId === 'room-2' ? '#fef3c7' : '#38bdf8');
     ctx.fillRect(1, 1, 14, 14);
-    ctx.fillStyle = '#78350f'; // wood frame
+    ctx.fillStyle = '#451a03'; // Cedar frame
     ctx.strokeRect(0.5, 0.5, 15, 15);
     ctx.fillRect(7, 0, 2, 16);
     ctx.fillRect(0, 7, 16, 2);
+    ctx.fillStyle = '#78350f';
+    ctx.fillRect(3, 0, 1, 16);
+    ctx.fillRect(12, 0, 1, 16);
+    ctx.fillRect(0, 3, 16, 1);
+    ctx.fillRect(0, 12, 16, 1);
 
   } else {
-    // General wooden shelf / crate
-    ctx.fillStyle = '#78350f';
+    // Japanese Wooden Storage Chest / Tansu (箪笥)
+    ctx.fillStyle = '#451a03';
     ctx.fillRect(1, 1, 14, 14);
-    ctx.fillStyle = '#92400e';
+    ctx.fillStyle = '#78350f';
     ctx.fillRect(2, 2, 12, 12);
+    // Drawers with black iron pulls
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(3, 7, 10, 1);
+    ctx.fillRect(7, 4, 2, 1);
+    ctx.fillRect(7, 10, 2, 1);
   }
 
   assetCache.set(key, canvas);

@@ -348,36 +348,40 @@ export const GameDarts: React.FC<GameDartsProps> = ({ onSuccess }) => {
   const isPlayerPhase = stateRef.current.phase === 'PLAYER_X' || stateRef.current.phase === 'PLAYER_Y';
 
   return (
-    <div className="flex flex-col items-center select-none font-pixel w-full max-w-xs">
+    <div className="flex flex-col items-center select-none font-pixel w-full max-w-[560px]">
       {/* Score Header */}
-      <div className="flex justify-between items-center w-full mb-2 text-xs">
+      <div className="flex justify-between items-center w-full mb-2 text-xs sm:text-sm px-1">
         <span className="text-cyan-400 font-bold">YOU: {playerPoints}</span>
-        <span className="text-yellow-400 text-[10px] font-mono bg-yellow-950/80 px-2 py-0.5 border border-yellow-500">
+        <span className="text-yellow-400 text-[10px] sm:text-xs font-mono bg-yellow-950/80 px-2.5 py-0.5 border border-yellow-500">
           RND {roundNumber} • {speedMultiplier.toFixed(2)}x
         </span>
         <span className="text-rose-400 font-bold">AI: {aiPoints}</span>
       </div>
 
-      <div className="relative bg-slate-950 p-2.5 border-4 border-slate-700 shadow-2xl flex flex-col items-center">
+      <div className="relative bg-slate-950 p-2.5 sm:p-3 border-4 border-slate-700 shadow-2xl flex flex-col items-center w-full">
         <canvas
           ref={canvasRef}
           width={260}
           height={240}
           onMouseDown={triggerPlayerAction}
-          className="pixelated block cursor-pointer border border-slate-800"
+          onTouchStart={(e) => {
+            e.preventDefault();
+            triggerPlayerAction();
+          }}
+          className="pixelated block cursor-pointer border border-slate-800 touch-none w-full max-w-[480px] aspect-[260/240] object-contain"
         />
 
-        <div className="text-[10px] text-yellow-300 font-bold mt-2 text-center h-4 tracking-wider">
+        <div className="text-[10px] sm:text-xs text-yellow-300 font-bold mt-2 text-center h-4 tracking-wider">
           {statusText}
         </div>
 
         {won && (
           <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center border-2 border-emerald-400 p-4 animate-in fade-in z-20">
-            <span className="text-emerald-400 text-sm mb-1 font-bold">★ TARGET ZERO REACHED! ★</span>
-            <span className="text-[10px] text-slate-300 mb-3">You beat the security AI!</span>
+            <span className="text-emerald-400 text-sm sm:text-base mb-1 font-bold">★ TARGET ZERO REACHED! ★</span>
+            <span className="text-xs text-slate-300 mb-3">You beat the security AI!</span>
             <button
               onClick={() => onSuccessRef.current()}
-              className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold border-2 border-white cursor-pointer shadow-lg"
+              className="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-black text-xs sm:text-sm font-bold border-2 border-white cursor-pointer active:translate-y-0.5 shadow-lg"
             >
               CLAIM REWARD NOW
             </button>
@@ -386,10 +390,10 @@ export const GameDarts: React.FC<GameDartsProps> = ({ onSuccess }) => {
 
         {gameOver && !won && (
           <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center border-2 border-red-500 p-4 z-20">
-            <span className="text-red-400 text-xs mb-3 font-bold">AI TOOL REACHED 0 FIRST</span>
+            <span className="text-red-400 text-sm mb-3 font-bold">AI TOOL REACHED 0 FIRST</span>
             <button
               onClick={restartAll}
-              className="px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white text-[10px] border-2 border-white cursor-pointer"
+              className="px-5 py-2 bg-red-600 hover:bg-red-500 text-white text-xs border-2 border-white cursor-pointer active:translate-y-0.5"
             >
               TRY AGAIN
             </button>
@@ -399,8 +403,12 @@ export const GameDarts: React.FC<GameDartsProps> = ({ onSuccess }) => {
 
       <button
         onMouseDown={triggerPlayerAction}
+        onTouchStart={(e) => {
+          e.preventDefault();
+          triggerPlayerAction();
+        }}
         disabled={!isPlayerPhase || won}
-        className={`mt-3 px-8 py-2 font-pixel text-xs font-bold border-2 border-white cursor-pointer active:translate-y-0.5 shadow-md transition-all ${
+        className={`mt-3 px-8 py-2.5 font-pixel text-xs sm:text-sm font-bold border-2 border-white cursor-pointer active:translate-y-0.5 shadow-md transition-all w-full max-w-[320px] text-center ${
           isPlayerPhase
             ? 'bg-yellow-400 hover:bg-yellow-300 text-black animate-pulse'
             : 'bg-slate-800 text-slate-500 border-slate-600 cursor-not-allowed opacity-60'
@@ -413,7 +421,7 @@ export const GameDarts: React.FC<GameDartsProps> = ({ onSuccess }) => {
           : 'WATCHING AI TURN...'}
       </button>
 
-      <p className="text-[9px] text-slate-400 mt-2 text-center">
+      <p className="text-[10px] sm:text-xs text-slate-400 mt-2 text-center">
         Speed increases after both play: +50% → +25% → +12.5% → +6.25%!
       </p>
     </div>
