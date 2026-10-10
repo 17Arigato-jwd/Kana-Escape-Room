@@ -19,7 +19,10 @@ interface Env {
   };
 }
 
-// In-memory global fallback cache across warm edge nodes if KV is not yet bound
+const GLOBAL_BIN_URL = 'https://extendsclass.com/api/json-storage/bin/adadbea';
+const GLOBAL_SECURITY_KEY = 'kana-escape-room-2026-secret-key';
+
+// In-memory fallback across warm edge nodes
 let memoryLeaderboard: LeaderboardEntry[] = [];
 
 const CORS_HEADERS = {
@@ -30,15 +33,59 @@ const CORS_HEADERS = {
   'Cache-Control': 'no-cache, no-store, must-revalidate',
 };
 
+async function fetchRemoteEntries(): Promise<LeaderboardEntry[]> {
+  try {
+    const res = await fetch(`${GLOBAL_BIN_URL}?ts=${Date.now()}`, {
+      headers: { Accept: 'application/json' },
+    });
+    if (res.ok) {
+      const data: any = await res.json();
+      if (data && Array.isArray(data.runs)) return data.runs;
+      if (Array.isArray(data)) return data;
+    }
+  } catch {
+    // ignore
+  }
+  return [];
+}
+
+async function saveRemoteEntries(entries: LeaderboardEntry[]): Promise<boolean> {
+  try {
+    const res = await fetch(GLOBAL_BIN_URL, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Security-key': GLOBAL_SECURITY_KEY,
+      },
+      body: JSON.stringify({ runs: entries }),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 export const onRequestGet = async (context: { env: Env }) => {
   try {
     let entries: LeaderboardEntry[] = [];
+
+    // 1. Check Cloudflare KV if bound
     if (context.env?.LEADERBOARD_KV) {
-      const data = await context.env.LEADERBOARD_KV.get('global_leaderboard', 'json');
-      if (Array.isArray(data)) {
-        entries = data;
-      }
-    } else {
+      try {
+        const data = await context.env.LEADERBOARD_KV.get('global_leaderboard', 'json');
+        if (Array.isArray(data) && data.length > 0) {
+          entries = data;
+        }
+      } catch {}
+    }
+
+    // 2. Fetch from persistent global cloud storage
+    if (entries.length === 0) {
+      entries = await fetchRemoteEntries();
+    }
+
+    // 3. Fallback to in-memory cache
+    if (entries.length === 0 && memoryLeaderboard.length > 0) {
       entries = memoryLeaderboard;
     }
 
@@ -65,45 +112,52 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
       });
     }
 
+    // 1. Fetch current runs
     let entries: LeaderboardEntry[] = [];
     if (context.env?.LEADERBOARD_KV) {
-      const data = await context.env.LEADERBOARD_KV.get('global_leaderboard', 'json');
-      if (Array.isArray(data)) {
-        entries = data;
-      }
-    } else {
-      entries = memoryLeaderboard;
+      try {
+        const data = await context.env.LEADERBOARD_KV.get('global_leaderboard', 'json');
+        if (Array.isArray(data) && data.length > 0) entries = data;
+      } catch {}
     }
 
-    // Deduplicate and upsert
-    const existingIndex = entries.findIndex((e) => e.id === newEntry.id);
-    if (existingIndex >= 0) {
-      entries[existingIndex] = newEntry;
-    } else {
-      entries.push(newEntry);
-    }
+    const remoteEntries = await fetchRemoteEntries();
 
-    // Sort: lowest playtime first (fastest escape), then highest kana
-    entries.sort((a, b) => {
-      if (a.playtimeSeconds !== b.playtimeSeconds) {
-        return a.playtimeSeconds - b.playtimeSeconds;
-      }
-      if (a.totalKana !== b.totalKana) {
-        return (b.totalKana || 0) - (a.totalKana || 0);
-      }
-      return b.timestamp - a.timestamp;
-    });
+    // Merge entries
+    const map = new Map<string, LeaderboardEntry>();
+    remoteEntries.forEach((e) => map.set(e.id, e));
+    entries.forEach((e) => map.set(e.id, e));
+    memoryLeaderboard.forEach((e) => map.set(e.id, e));
 
-    // Keep top 50 runs
-    entries = entries.slice(0, 50);
+    // Upsert the new run
+    map.set(newEntry.id, newEntry);
 
+    // Sort: lowest playtime first (fastest escape), then highest kana, then latest
+    const allEntries = Array.from(map.values())
+      .sort((a, b) => {
+        if (a.playtimeSeconds !== b.playtimeSeconds) {
+          return a.playtimeSeconds - b.playtimeSeconds;
+        }
+        if (a.totalKana !== b.totalKana) {
+          return (b.totalKana || 0) - (a.totalKana || 0);
+        }
+        return b.timestamp - a.timestamp;
+      })
+      .slice(0, 50);
+
+    memoryLeaderboard = allEntries;
+
+    // 2. Persist to Cloudflare KV if bound
     if (context.env?.LEADERBOARD_KV) {
-      await context.env.LEADERBOARD_KV.put('global_leaderboard', JSON.stringify(entries));
-    } else {
-      memoryLeaderboard = entries;
+      try {
+        await context.env.LEADERBOARD_KV.put('global_leaderboard', JSON.stringify(allEntries));
+      } catch {}
     }
 
-    return new Response(JSON.stringify({ success: true, allEntries: entries }), {
+    // 3. Persist to persistent global cloud storage
+    await saveRemoteEntries(allEntries);
+
+    return new Response(JSON.stringify({ success: true, allEntries }), {
       status: 200,
       headers: CORS_HEADERS,
     });

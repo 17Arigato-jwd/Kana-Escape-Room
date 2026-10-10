@@ -38,40 +38,69 @@ export const getLeaderboard = (): LeaderboardEntry[] => {
   return [];
 };
 
+const GLOBAL_BIN_URL = 'https://extendsclass.com/api/json-storage/bin/adadbea';
+const GLOBAL_SECURITY_KEY = 'kana-escape-room-2026-secret-key';
+
 export const fetchLeaderboardAsync = async (): Promise<LeaderboardEntry[]> => {
   const local = getLeaderboard();
+  let serverEntries: LeaderboardEntry[] = [];
+
+  // 1. Try Cloudflare Pages Edge API
   try {
-    const res = await fetch('/api/leaderboard', { cache: 'no-store' });
+    const res = await fetch(`/api/leaderboard?ts=${Date.now()}`, { cache: 'no-store' });
     if (res.ok) {
-      const serverEntries: LeaderboardEntry[] = await res.json();
-      if (Array.isArray(serverEntries)) {
-        // Merge server and local runs, deduplicate by unique id
-        const map = new Map<string, LeaderboardEntry>();
-        serverEntries.forEach((e) => map.set(e.id, e));
-        local.forEach((e) => {
-          if (!map.has(e.id)) {
-            map.set(e.id, e);
-            // Sync local-only run to cloud in background
-            fetch('/api/leaderboard', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(e),
-            }).catch(() => {});
-          }
-        });
-        const merged = sortLeaderboard(Array.from(map.values())).slice(0, 50);
-        try {
-          localStorage.setItem(LEADERBOARD_STORAGE_KEY, JSON.stringify(merged));
-        } catch {
-          // ignore
-        }
-        return merged;
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        serverEntries = data;
       }
     }
   } catch {
-    // Offline or server unreachable: return cached local runs
+    // fallback
   }
-  return local;
+
+  // 2. Direct cloud bin fallback if Edge API is empty or unreachable
+  if (serverEntries.length === 0) {
+    try {
+      const res = await fetch(`${GLOBAL_BIN_URL}?ts=${Date.now()}`, { cache: 'no-store' });
+      if (res.ok) {
+        const raw = await res.json();
+        if (raw && Array.isArray(raw.runs) && raw.runs.length > 0) {
+          serverEntries = raw.runs;
+        } else if (Array.isArray(raw) && raw.length > 0) {
+          serverEntries = raw;
+        }
+      }
+    } catch {
+      // offline
+    }
+  }
+
+  // 3. Merge server and local runs, deduplicate by unique id
+  const map = new Map<string, LeaderboardEntry>();
+  serverEntries.forEach((e) => map.set(e.id, e));
+
+  // Sync any local-only run from this device up to the cloud
+  local.forEach((e) => {
+    if (!map.has(e.id)) {
+      map.set(e.id, e);
+      // Background push to cloud so other devices immediately see it
+      fetch('/api/leaderboard', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(e),
+      }).catch(() => {});
+    }
+  });
+
+  const merged = sortLeaderboard(Array.from(map.values())).slice(0, 50);
+
+  try {
+    localStorage.setItem(LEADERBOARD_STORAGE_KEY, JSON.stringify(merged));
+  } catch {
+    // ignore
+  }
+
+  return merged;
 };
 
 export const sortLeaderboard = (entries: LeaderboardEntry[]): LeaderboardEntry[] => {
@@ -129,13 +158,22 @@ export const saveLeaderboardEntry = (params: {
     // ignore
   }
 
-  // Asynchronously broadcast new run to Cloudflare live leaderboard
+  // Asynchronously broadcast new run to Cloudflare live leaderboard and persistent cloud backend
   if (typeof window !== 'undefined' && typeof fetch !== 'undefined') {
     fetch('/api/leaderboard', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newEntry),
-    }).catch(() => {});
+    }).catch(() => {
+      fetch(GLOBAL_BIN_URL, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Security-key': GLOBAL_SECURITY_KEY,
+        },
+        body: JSON.stringify({ runs: updated }),
+      }).catch(() => {});
+    });
   }
 
   const rank = updated.findIndex((e) => e.id === newEntry.id) + 1;

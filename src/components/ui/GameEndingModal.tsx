@@ -6,6 +6,7 @@ import { lookupJapaneseWord } from '../../data/dictionary';
 import {
   getLeaderboard,
   saveLeaderboardEntry,
+  fetchLeaderboardAsync,
   LeaderboardEntry,
   formatTime,
 } from '../../utils/leaderboard';
@@ -64,6 +65,18 @@ export const GameEndingModal: React.FC<GameEndingModalProps> = ({
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    let isMounted = true;
+    fetchLeaderboardAsync().then((fresh) => {
+      if (isMounted && fresh && fresh.length > 0) {
+        setLeaderboardEntries(fresh);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   // Autofocus run name input
   useEffect(() => {
     if (!submitted && viewMode === 'SUMMARY') {
@@ -98,6 +111,15 @@ export const GameEndingModal: React.FC<GameEndingModalProps> = ({
       particleCount: 80,
       spread: 70,
       origin: { y: 0.6 },
+    });
+
+    // Immediate background cloud sync to ensure rank and entries are global
+    fetchLeaderboardAsync().then((fresh) => {
+      if (fresh && fresh.length > 0) {
+        setLeaderboardEntries(fresh);
+        const newRank = fresh.findIndex((r) => r.id === res.entry.id) + 1;
+        if (newRank > 0) setCurrentRank(newRank);
+      }
     });
   };
 
