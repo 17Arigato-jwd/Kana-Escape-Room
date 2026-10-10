@@ -195,13 +195,13 @@ export const GamePatternMemory: React.FC<GamePatternMemoryProps> = ({ onSuccess,
 
   return (
     <div className="flex flex-col items-center select-none font-pixel w-full max-w-[500px]">
-      <div className="flex justify-between items-center w-full mb-3 text-xs sm:text-sm">
+      <div className="flex justify-between items-center w-full mb-1.5 sm:mb-2 text-xs sm:text-sm px-1">
         <span className="text-amber-400 font-bold">MEMORY MATRIX</span>
         <span className="text-emerald-400 font-bold">STAGE {stage}/{totalStages}</span>
       </div>
 
-      <div className="relative bg-slate-950 p-4 sm:p-6 border-4 border-slate-700 shadow-2xl flex flex-col items-center w-full">
-        <div className="text-xs sm:text-sm text-slate-400 mb-4 text-center font-bold">
+      <div className="relative bg-slate-950 p-2.5 sm:p-5 border-4 border-slate-700 shadow-2xl flex flex-col items-center w-full">
+        <div className="text-[11px] sm:text-sm text-slate-400 mb-2 sm:mb-3 text-center font-bold">
           {isShowingPattern ? (
             <span className="text-cyan-400 animate-pulse">WATCH THE SEQUENCE...</span>
           ) : (
@@ -209,8 +209,8 @@ export const GamePatternMemory: React.FC<GamePatternMemoryProps> = ({ onSuccess,
           )}
         </div>
 
-        {/* 3x3 Grid Buttons */}
-        <div className="grid grid-cols-3 gap-3 sm:gap-4 w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96">
+        {/* 3x3 Grid Buttons - Height-aware responsive sizing */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-3.5 w-[min(70vw,240px,42vh)] h-[min(70vw,240px,42vh)] sm:w-72 sm:h-72">
           {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => {
             const isActive = activeButton === num;
             return (
@@ -218,7 +218,7 @@ export const GamePatternMemory: React.FC<GamePatternMemoryProps> = ({ onSuccess,
                 key={num}
                 disabled={isShowingPattern || gameOver || won}
                 onClick={() => handleButtonClick(num)}
-                className={`w-full h-full aspect-square border-4 flex items-center justify-center text-2xl sm:text-3xl md:text-4xl font-bold transition-all cursor-pointer rounded ${
+                className={`w-full h-full aspect-square border-3 sm:border-4 flex items-center justify-center text-lg sm:text-2xl md:text-3xl font-bold transition-all cursor-pointer rounded ${
                   isActive
                     ? 'bg-yellow-400 text-black border-white scale-95 shadow-[0_0_20px_rgba(250,204,21,0.9)]'
                     : 'bg-slate-800 text-slate-300 border-slate-600 hover:border-slate-400 active:scale-95'
@@ -230,7 +230,7 @@ export const GamePatternMemory: React.FC<GamePatternMemoryProps> = ({ onSuccess,
           })}
         </div>
 
-        <p className="text-[10px] sm:text-xs text-slate-400 mt-3 text-center">
+        <p className="text-[9px] sm:text-xs text-slate-400 mt-2 sm:mt-3 text-center">
           Press <span className="text-amber-300 font-bold">[1]–[9]</span> or <span className="text-cyan-400 font-bold">Numpad</span> to repeat
         </p>
 

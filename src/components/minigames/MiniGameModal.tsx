@@ -114,25 +114,39 @@ export const MiniGameModal: React.FC<MiniGameModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-xs p-2 sm:p-4">
-      <div className="relative bg-[#1a192f] border-4 border-[#3b3a58] pixel-box p-4 sm:p-6 max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl w-full flex flex-col items-center shadow-2xl max-h-[96vh] overflow-y-auto">
-        {/* Cabinet Header */}
-        <div className="flex justify-between items-center w-full pb-3 border-b-2 border-slate-700/80 mb-4">
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 bg-red-500 rounded-none animate-ping" />
-            <h2 className="font-pixel text-xs sm:text-sm text-yellow-400 tracking-wider">
-              {interactable.name.toUpperCase()}
-            </h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-xs p-1.5 sm:p-4 select-none">
+      <div className="relative bg-[#1a192f] border-4 border-[#3b3a58] pixel-box p-3 sm:p-5 max-w-xl md:max-w-2xl lg:max-w-3xl xl:max-w-4xl w-full flex flex-col items-center shadow-2xl max-h-[96dvh] overflow-y-auto">
+        {/* Compact Cabinet Header with integrated Reward indicator */}
+        <div className="flex justify-between items-center w-full pb-2 border-b-2 border-slate-700/80 mb-2 sm:mb-3">
+          <div className="flex items-center gap-2 flex-wrap min-w-0">
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="w-2.5 h-2.5 bg-red-500 rounded-none animate-ping" />
+              <h2 className="font-pixel text-[10px] sm:text-xs md:text-sm text-yellow-400 tracking-wider truncate">
+                {interactable.name.toUpperCase()}
+              </h2>
+            </div>
+            {/* Reward Badge integrated cleanly into header */}
+            <div className="flex items-center gap-1 bg-amber-950/80 border border-amber-500/70 px-2 py-0.5 shadow-sm">
+              <span className="font-pixel text-[8px] text-amber-300">REWARD:</span>
+              <span className="font-kana text-sm font-bold text-amber-400">
+                {interactable.rewardKana.character}
+              </span>
+              <span className="font-mono text-[9px] text-amber-200">
+                ({interactable.rewardKana.romaji})
+              </span>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
+
+          <div className="flex items-center gap-1.5 shrink-0 ml-2">
             {/* Universal R Reset Button */}
             <button
               onClick={handleReset}
               title="Reset minigame [R]"
-              className="font-pixel text-[10px] sm:text-xs px-2.5 py-1 bg-amber-950/70 hover:bg-amber-800 text-amber-200 border-2 border-amber-500/80 cursor-pointer active:translate-y-0.5 flex items-center gap-1 shadow-sm"
+              className="font-pixel text-[9px] sm:text-xs px-2 py-1 bg-amber-950/70 hover:bg-amber-800 text-amber-200 border border-amber-500/80 cursor-pointer active:translate-y-0.5 flex items-center gap-1 shadow-sm"
             >
               <span>↻</span>
-              <span>[R] RESET</span>
+              <span className="hidden xs:inline">[R]</span>
+              <span>RESET</span>
             </button>
             <button
               onClick={() => {
@@ -140,28 +154,15 @@ export const MiniGameModal: React.FC<MiniGameModalProps> = ({
                 onClose();
               }}
               title="Exit minigame [ESC]"
-              className="font-pixel text-[10px] sm:text-xs px-2.5 py-1 bg-rose-900/60 hover:bg-rose-700 text-rose-200 border-2 border-rose-500 cursor-pointer active:translate-y-0.5"
+              className="font-pixel text-[9px] sm:text-xs px-2 py-1 bg-rose-900/60 hover:bg-rose-700 text-rose-200 border border-rose-500 cursor-pointer active:translate-y-0.5"
             >
               [ESC]
             </button>
           </div>
         </div>
 
-        {/* Reward Badge Banner */}
-        <div className="bg-slate-950/90 border-2 border-amber-500/60 px-4 py-1.5 mb-4 flex items-center gap-3 shadow-inner">
-          <span className="font-pixel text-[10px] text-amber-300">POTENTIAL REWARD:</span>
-          <div className="flex items-center gap-1.5">
-            <span className="font-kana text-xl font-bold text-amber-400 bg-amber-950/90 px-2.5 py-0.5 border border-amber-500">
-              {interactable.rewardKana.character}
-            </span>
-            <span className="font-mono text-xs text-amber-200">
-              ({interactable.rewardKana.romaji})
-            </span>
-          </div>
-        </div>
-
-        {/* Active Minigame with Suspense loading fallback and Universal Reset Key */}
-        <div className="w-full flex justify-center py-1 min-h-[340px] sm:min-h-[420px] items-center">
+        {/* Active Minigame with natural flex-col flow (prevents vertical centering overlaps) */}
+        <div className="w-full flex flex-col items-center justify-start py-1">
           <Suspense
             key={resetKey}
             fallback={
@@ -177,10 +178,12 @@ export const MiniGameModal: React.FC<MiniGameModalProps> = ({
           </Suspense>
         </div>
 
-        {/* Footer controls reminder */}
-        <div className="mt-4 pt-3 border-t border-slate-800 w-full flex justify-between items-center text-[10px] font-pixel text-slate-400">
-          <span>{interactable.description}</span>
-          <span className="text-slate-500">[R] reset minigame • [ESC] exit</span>
+        {/* Footer controls reminder - responsive and collision-free */}
+        <div className="mt-2 pt-2 border-t border-slate-800 w-full flex flex-col sm:flex-row justify-between items-center text-[9px] sm:text-[10px] font-pixel text-slate-400 gap-1 text-center sm:text-left">
+          <span className="text-slate-400 line-clamp-1">{interactable.description}</span>
+          <span className="text-slate-500 text-[8px] sm:text-[9px] shrink-0 hidden sm:inline">
+            [R] reset • [ESC] exit
+          </span>
         </div>
       </div>
     </div>

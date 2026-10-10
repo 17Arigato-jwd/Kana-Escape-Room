@@ -411,7 +411,7 @@ export default function App() {
         />
       ) : (
         <div
-          className={`w-full h-full flex flex-col items-center justify-between p-1.5 sm:p-3 transition-all ${
+          className={`w-full h-full flex flex-col items-center justify-between p-1 sm:p-3 transition-all ${
             device.isDesktop ? 'max-w-7xl 2xl:max-w-[1536px]' : 'max-w-2xl sm:max-w-4xl'
           }`}
         >
@@ -435,7 +435,7 @@ export default function App() {
           />
 
           {/* Main 2D Pixel-Art Game Viewport */}
-          <div className="flex-1 w-full flex items-center justify-center my-auto">
+          <div className="flex-1 w-full flex flex-col items-center justify-start sm:justify-center my-auto overflow-hidden">
             <GameViewport
               room={currentRoom}
               characterId={selectedCharacter}
