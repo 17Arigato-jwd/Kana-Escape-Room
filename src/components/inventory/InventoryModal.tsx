@@ -313,32 +313,32 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
           </div>
 
           {/* Word Evaluation Output Card */}
-          <div className="min-h-[90px] flex items-center justify-center">
+          <div className="min-h-[80px] flex items-center justify-center">
             {currentWordStr.length === 0 ? (
-              <div className="text-center text-slate-500 font-pixel text-xs py-3">
+              <div className="text-center text-slate-500 font-pixel text-xs py-2">
                 Place Kana into the slots above to form Japanese words!
               </div>
             ) : wordData ? (
               <div
-                className={`w-full p-4 border-2 flex items-center justify-between transition-all ${
+                className={`w-full p-3 sm:p-4 border-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 transition-all ${
                   isTargetWord
                     ? 'bg-emerald-950/80 border-emerald-400 text-emerald-200 shadow-[0_0_18px_rgba(52,211,153,0.3)]'
                     : 'bg-indigo-950/70 border-indigo-400 text-indigo-200'
                 }`}
               >
-                <div className="flex items-center gap-4">
-                  <span className="text-4xl filter drop-shadow">{wordData.icon}</span>
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <span className="text-3xl sm:text-4xl filter drop-shadow shrink-0">{wordData.icon}</span>
                   <div>
-                    <div className="flex items-baseline gap-2">
-                      <span className="font-kana text-2xl font-bold text-yellow-300">
+                    <div className="flex items-baseline gap-1.5 sm:gap-2 flex-wrap">
+                      <span className="font-kana text-xl sm:text-2xl font-bold text-yellow-300">
                         {wordData.word}
                       </span>
                       {wordData.kanji && (
-                        <span className="font-kana text-lg text-slate-300">
+                        <span className="font-kana text-base sm:text-lg text-slate-300">
                           ({wordData.kanji})
                         </span>
                       )}
-                      <span className="font-mono text-sm text-cyan-300 font-bold">
+                      <span className="font-mono text-xs sm:text-sm text-cyan-300 font-bold">
                         [{wordData.romaji}]
                       </span>
                       <button
@@ -349,28 +349,28 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
                         🔊
                       </button>
                     </div>
-                    <div className="text-sm font-semibold text-white mt-0.5">
+                    <div className="text-xs sm:text-sm font-semibold text-white mt-0.5">
                       Meaning: {wordData.meaning} ({wordData.type})
                     </div>
                   </div>
                 </div>
 
-                <div className="text-right">
+                <div className="text-left sm:text-right w-full sm:w-auto shrink-0 border-t sm:border-t-0 border-slate-700/60 pt-2 sm:pt-0">
                   {isTargetWord ? (
-                    <div className="flex flex-col items-end">
-                      <span className="font-pixel text-xs text-yellow-300 font-bold animate-bounce">
+                    <div className="flex flex-col items-start sm:items-end">
+                      <span className="font-pixel text-[11px] sm:text-xs text-yellow-300 font-bold animate-bounce">
                         ★ MATCHES DOOR TARGET! ★
                       </span>
-                      <span className="text-xs text-emerald-300 font-sans mt-1">
+                      <span className="text-xs text-emerald-300 font-sans mt-0.5">
                         The exit door has unlocked!
                       </span>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-end">
+                    <div className="flex flex-col items-start sm:items-end">
                       <span className="font-pixel text-[10px] text-indigo-300">
                         ✓ VALID JAPANESE WORD
                       </span>
-                      <span className="text-xs text-slate-400 font-sans mt-1">
+                      <span className="text-xs text-slate-400 font-sans mt-0.5">
                         Not the exit clue. Keep experimenting!
                       </span>
                     </div>
@@ -378,9 +378,9 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
                 </div>
               </div>
             ) : (
-              <div className="w-full p-4 bg-rose-950/40 border-2 border-rose-800 text-rose-300 flex items-center justify-center gap-3">
-                <span className="text-lg">❓</span>
-                <span className="font-pixel text-xs">
+              <div className="w-full p-3 sm:p-4 bg-rose-950/40 border-2 border-rose-800 text-rose-300 flex items-center justify-center gap-3">
+                <span className="text-base sm:text-lg">❓</span>
+                <span className="font-pixel text-[11px] sm:text-xs text-center">
                   "{currentWordStr}" is not a recognized word in the dictionary.
                 </span>
               </div>
@@ -389,9 +389,9 @@ export const InventoryModal: React.FC<InventoryModalProps> = ({
         </div>
 
         {/* Footer info */}
-        <div className="flex justify-between items-center text-[10px] font-pixel text-slate-500 pt-2 border-t border-slate-800">
-          <span>Target Word: {currentRoom.targetMeaning} ({currentRoom.targetIcon})</span>
-          <span>Press [I] or [ESC] to return to room</span>
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-1.5 text-[9px] sm:text-[10px] font-pixel text-slate-400 pt-2 border-t border-slate-800 text-center sm:text-left">
+          <span className="text-amber-300">Target Word: {currentRoom.targetMeaning} ({currentRoom.targetIcon})</span>
+          <span className="text-slate-500">Tap [X] CLOSE or press [I] / [ESC] to return</span>
         </div>
       </div>
     </div>

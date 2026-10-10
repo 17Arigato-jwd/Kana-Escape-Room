@@ -344,20 +344,20 @@ export const GameSeaBattle: React.FC<GameSeaBattleProps> = ({ onSuccess }) => {
         <span className="text-rose-400 font-bold">ENEMY RADAR ({9 - playerHits}/9)</span>
       </div>
 
-      <div className="relative bg-slate-950 p-3 sm:p-5 border-4 border-slate-700 shadow-2xl flex flex-col items-center w-full">
+      <div className="relative bg-slate-950 p-2 sm:p-5 border-4 border-slate-700 shadow-2xl flex flex-col items-center w-full">
         {/* Status Line */}
-        <div className="text-xs sm:text-sm text-yellow-300 mb-3 h-5 text-center font-bold tracking-wider">
+        <div className="text-[11px] sm:text-xs md:text-sm text-yellow-300 mb-2 min-h-[28px] text-center font-bold tracking-wide flex items-center justify-center px-1">
           {status}
         </div>
 
         {/* Dual 5x5 Grids side-by-side or stacked on mobile */}
-        <div className="flex flex-col sm:flex-row justify-around items-center w-full gap-4 sm:gap-6 mb-3">
+        <div className="flex flex-row flex-wrap sm:flex-nowrap justify-center items-start w-full gap-2 sm:gap-6 mb-2">
           {/* PLAYER FLEET (5x5) */}
           <div className="flex flex-col items-center">
-            <span className="text-xs text-cyan-400 mb-1.5 font-bold">
-              {phase === 'DEPLOY' ? 'ARRANGE (CLICK TO PLACE)' : 'YOUR DEFENSE'}
+            <span className="text-[10px] sm:text-xs text-cyan-400 mb-1 font-bold">
+              {phase === 'DEPLOY' ? 'ARRANGE FLEET' : 'YOUR FLEET'}
             </span>
-            <div className="grid grid-cols-5 gap-1.5 bg-slate-900 border border-slate-700 p-2 rounded">
+            <div className="grid grid-cols-5 gap-1 bg-slate-900 border border-slate-700 p-1 sm:p-1.5 rounded">
               {Array.from({ length: 25 }).map((_, idx) => {
                 const hasShip = playerSet.has(idx);
                 const attack = aiAttacks[idx];
@@ -374,7 +374,7 @@ export const GameSeaBattle: React.FC<GameSeaBattleProps> = ({ onSuccess }) => {
                     onMouseEnter={() => setHoverIndex(idx)}
                     onMouseLeave={() => setHoverIndex(null)}
                     disabled={phase !== 'DEPLOY'}
-                    className={`w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 border flex items-center justify-center text-sm sm:text-base font-bold transition-all relative rounded-[2px] ${
+                    className={`w-7 h-7 min-[380px]:w-8 min-[380px]:h-8 sm:w-10 sm:h-10 md:w-11 md:h-11 border flex items-center justify-center text-xs sm:text-sm md:text-base font-bold transition-all relative rounded-[2px] ${
                       phase === 'DEPLOY'
                         ? isHovered
                           ? hoverValid
@@ -401,7 +401,7 @@ export const GameSeaBattle: React.FC<GameSeaBattleProps> = ({ onSuccess }) => {
             </div>
 
             {/* Player Fleet Status (Greyed out when sunk) */}
-            <div className="flex gap-1.5 mt-2 justify-center w-full">
+            <div className="flex gap-1.5 mt-1.5 justify-center w-full">
               {SHIPS_DEF.map((s) => {
                 const sunk = isPlayerShipSunk(s.id);
                 return (
@@ -422,8 +422,8 @@ export const GameSeaBattle: React.FC<GameSeaBattleProps> = ({ onSuccess }) => {
 
           {/* ENEMY TARGET RADAR (5x5) */}
           <div className="flex flex-col items-center">
-            <span className="text-xs text-rose-400 mb-1.5 font-bold">ENEMY RADAR (5×5)</span>
-            <div className="grid grid-cols-5 gap-1.5 bg-slate-900 border border-slate-700 p-2 rounded">
+            <span className="text-[10px] sm:text-xs text-rose-400 mb-1 font-bold">ENEMY RADAR</span>
+            <div className="grid grid-cols-5 gap-1 bg-slate-900 border border-slate-700 p-1 sm:p-1.5 rounded">
               {Array.from({ length: 25 }).map((_, idx) => {
                 const attack = playerAttacks[idx];
                 const isClickable = phase === 'BATTLE' && isPlayerTurn && !attack && !won && !gameOver;
@@ -437,7 +437,7 @@ export const GameSeaBattle: React.FC<GameSeaBattleProps> = ({ onSuccess }) => {
                     key={idx}
                     onClick={() => handlePlayerAttack(idx)}
                     disabled={!isClickable}
-                    className={`w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 border flex items-center justify-center text-sm sm:text-base font-bold transition-all rounded-[2px] ${
+                    className={`w-7 h-7 min-[380px]:w-8 min-[380px]:h-8 sm:w-10 sm:h-10 md:w-11 md:h-11 border flex items-center justify-center text-xs sm:text-sm md:text-base font-bold transition-all rounded-[2px] ${
                       sunk
                         ? 'bg-slate-700/90 border-slate-500 text-slate-400 grayscale shadow-none'
                         : attack === 'hit'
@@ -456,7 +456,7 @@ export const GameSeaBattle: React.FC<GameSeaBattleProps> = ({ onSuccess }) => {
             </div>
 
             {/* Enemy Fleet Status (Greyed out when sunk) */}
-            <div className="flex gap-1.5 mt-2 justify-center w-full">
+            <div className="flex gap-1.5 mt-1.5 justify-center w-full">
               {SHIPS_DEF.map((s) => {
                 const sunk = isAiShipSunk(s.id);
                 return (

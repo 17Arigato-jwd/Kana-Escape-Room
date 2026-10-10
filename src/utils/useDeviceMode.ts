@@ -118,7 +118,7 @@ export function useDeviceMode(): DeviceModeInfo {
       aspectRatio = '3:2';
       canvasWidth = 720;
       canvasHeight = 480;
-      scale = 2.5;
+      scale = 3.3;
     } else {
       aspectRatio = '16:9';
       canvasWidth = 800;

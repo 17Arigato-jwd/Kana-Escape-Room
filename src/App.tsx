@@ -395,8 +395,10 @@ export default function App() {
     sounds.playKanaObtained();
   };
 
+  const isPortraitEmulator = device.orientation === 'portrait' || (device.isMobile && !device.isDesktop);
+
   return (
-    <main className="w-screen h-screen bg-[#0e0d1a] flex flex-col items-center justify-center relative overflow-hidden select-none">
+    <main className={`w-screen ${isPortraitEmulator ? 'h-[100dvh]' : 'h-screen'} bg-[#0e0d1a] flex flex-col items-center justify-center relative overflow-hidden select-none`}>
       {gameState === 'TITLE' ? (
         <TitleScreen
           hasSaveData={hasSaveData}
@@ -435,7 +437,7 @@ export default function App() {
           />
 
           {/* Main 2D Pixel-Art Game Viewport */}
-          <div className="flex-1 w-full flex flex-col items-center justify-start sm:justify-center my-auto overflow-hidden">
+          <div className={`flex-1 w-full flex flex-col items-center ${isPortraitEmulator ? 'h-full justify-between' : 'justify-start sm:justify-center my-auto'} overflow-hidden min-h-0`}>
             <GameViewport
               room={currentRoom}
               characterId={selectedCharacter}

@@ -35,7 +35,13 @@ export const GameFlappy: React.FC<GameFlappyProps> = ({ onSuccess, targetScore =
     won: false,
   });
 
+  const lastJumpTimeRef = useRef<number>(0);
+
   const jump = () => {
+    const now = Date.now();
+    if (now - lastJumpTimeRef.current < 160) return;
+    lastJumpTimeRef.current = now;
+
     const s = stateRef.current;
     if (s.won) return;
 
@@ -240,8 +246,7 @@ export const GameFlappy: React.FC<GameFlappyProps> = ({ onSuccess, targetScore =
       </div>
 
       <div
-        onClick={jump}
-        onTouchStart={(e) => {
+        onPointerDown={(e) => {
           e.preventDefault();
           jump();
         }}
@@ -293,7 +298,10 @@ export const GameFlappy: React.FC<GameFlappyProps> = ({ onSuccess, targetScore =
       </div>
 
       <button
-        onClick={jump}
+        onPointerDown={(e) => {
+          e.preventDefault();
+          jump();
+        }}
         className="mt-2 px-6 py-1.5 sm:py-2 bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs sm:text-sm border-2 border-yellow-200 cursor-pointer active:translate-y-0.5 shadow-md w-full max-w-[280px] text-center"
       >
         LIFT DRONE [SPACE]

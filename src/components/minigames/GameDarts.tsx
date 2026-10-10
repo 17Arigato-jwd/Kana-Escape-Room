@@ -79,8 +79,14 @@ export const GameDarts: React.FC<GameDartsProps> = ({ onSuccess }) => {
     s.sliderYDir = Math.sign(s.sliderYDir) * BASE_SPEED * nextSpeed;
   };
 
-  // Immediate input action - zero delay!
+  const lastActionTimeRef = useRef(0);
+
+  // Immediate input action - with 250ms debounce to prevent touch double-triggering
   const triggerPlayerAction = () => {
+    const now = performance.now();
+    if (now - lastActionTimeRef.current < 250) return;
+    lastActionTimeRef.current = now;
+
     const s = stateRef.current;
     if (s.won || s.gameOver) return;
 
@@ -363,8 +369,7 @@ export const GameDarts: React.FC<GameDartsProps> = ({ onSuccess }) => {
           ref={canvasRef}
           width={260}
           height={240}
-          onMouseDown={triggerPlayerAction}
-          onTouchStart={(e) => {
+          onPointerDown={(e) => {
             e.preventDefault();
             triggerPlayerAction();
           }}
@@ -402,8 +407,7 @@ export const GameDarts: React.FC<GameDartsProps> = ({ onSuccess }) => {
       </div>
 
       <button
-        onMouseDown={triggerPlayerAction}
-        onTouchStart={(e) => {
+        onPointerDown={(e) => {
           e.preventDefault();
           triggerPlayerAction();
         }}

@@ -31,7 +31,13 @@ export const GameLaneRunner: React.FC<GameLaneRunnerProps> = ({ onSuccess, targe
     gameOver: false,
   });
 
+  const lastLaneChangeTimeRef = useRef<number>(0);
+
   const changeLane = (dir: -1 | 1) => {
+    const now = Date.now();
+    if (now - lastLaneChangeTimeRef.current < 160) return;
+    lastLaneChangeTimeRef.current = now;
+
     const s = stateRef.current;
     if (s.won || s.gameOver) return;
     const next = Math.max(0, Math.min(2, s.lane + dir));
@@ -189,6 +195,53 @@ export const GameLaneRunner: React.FC<GameLaneRunnerProps> = ({ onSuccess, targe
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  const touchStartRef = useRef<{ x: number; y: number; time: number; handled: boolean } | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    if (!touch) return;
+    touchStartRef.current = {
+      x: touch.clientX,
+      y: touch.clientY,
+      time: Date.now(),
+      handled: false,
+    };
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    const touch = e.touches[0];
+    if (!touch || !touchStartRef.current) return;
+    if (touchStartRef.current.handled) return;
+
+    const deltaX = touch.clientX - touchStartRef.current.x;
+    const deltaY = touch.clientY - touchStartRef.current.y;
+
+    if (Math.abs(deltaX) > 25 && Math.abs(deltaX) > Math.abs(deltaY)) {
+      touchStartRef.current.handled = true;
+      if (deltaX < 0) {
+        changeLane(-1);
+      } else {
+        changeLane(1);
+      }
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStartRef.current) return;
+    if (!touchStartRef.current.handled) {
+      if (canvasRef.current) {
+        const rect = canvasRef.current.getBoundingClientRect();
+        const relX = touchStartRef.current.x - rect.left;
+        if (relX < rect.width * 0.5) {
+          changeLane(-1);
+        } else {
+          changeLane(1);
+        }
+      }
+    }
+    touchStartRef.current = null;
+  };
+
   return (
     <div className="flex flex-col items-center select-none font-pixel w-full max-w-[580px]">
       <div className="flex justify-between items-center w-full mb-2 text-xs sm:text-sm px-1">
@@ -202,25 +255,16 @@ export const GameLaneRunner: React.FC<GameLaneRunnerProps> = ({ onSuccess, targe
           width={260}
           height={200}
           className="pixelated block touch-none cursor-pointer w-full max-w-[560px] aspect-[260/200] object-contain"
-          onTouchStart={(e) => {
-            const touch = e.touches[0];
-            if (touch && canvasRef.current) {
-              const rect = canvasRef.current.getBoundingClientRect();
-              const relX = touch.clientX - rect.left;
-              if (relX < rect.width * 0.45) {
-                changeLane(-1);
-              } else if (relX > rect.width * 0.55) {
-                changeLane(1);
-              }
-            }
-          }}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
           onClick={(e) => {
             if (canvasRef.current) {
               const rect = canvasRef.current.getBoundingClientRect();
               const relX = e.clientX - rect.left;
-              if (relX < rect.width * 0.45) {
+              if (relX < rect.width * 0.5) {
                 changeLane(-1);
-              } else if (relX > rect.width * 0.55) {
+              } else {
                 changeLane(1);
               }
             }
@@ -255,19 +299,27 @@ export const GameLaneRunner: React.FC<GameLaneRunnerProps> = ({ onSuccess, targe
 
       <div className="flex gap-4 mt-3 w-full justify-center">
         <button
-          onClick={() => changeLane(-1)}
+          onPointerDown={(e) => {
+            e.preventDefault();
+            changeLane(-1);
+          }}
           className="px-7 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border-2 border-slate-600 text-xs sm:text-sm cursor-pointer active:bg-slate-600"
         >
           ◀ LEFT LANE
         </button>
         <button
-          onClick={() => changeLane(1)}
+          onPointerDown={(e) => {
+            e.preventDefault();
+            changeLane(1);
+          }}
           className="px-7 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border-2 border-slate-600 text-xs sm:text-sm cursor-pointer active:bg-slate-600"
         >
           RIGHT LANE ▶
         </button>
       </div>
-      <p className="text-[10px] sm:text-xs text-slate-400 mt-2">Corridor accelerates progressively! Reach 250m to escape.</p>
+      <p className="text-[10px] sm:text-xs text-slate-400 mt-2 text-center">
+        Swipe Left/Right, Tap Screen Sides, or use Buttons to steer!
+      </p>
     </div>
   );
 };

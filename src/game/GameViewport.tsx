@@ -666,7 +666,7 @@ export const GameViewport: React.FC<GameViewportProps> = ({
   const isPortraitEmulator = device.orientation === 'portrait' || (device.isMobile && !device.isDesktop);
 
   return (
-    <div className="w-full flex flex-col items-center select-none">
+    <div className={`w-full flex flex-col items-center select-none ${isPortraitEmulator ? 'h-full flex-1 justify-between min-h-0' : ''}`}>
       {/* 1. Upper Console Screen (Pure Game Viewport - 0 floating controls on top in emulator mode) */}
       <div
         className={`relative flex flex-col items-center justify-center w-full transition-all bg-black border-4 border-slate-800 pixel-box shadow-2xl overflow-hidden rounded-sm ${
@@ -778,7 +778,7 @@ export const GameViewport: React.FC<GameViewportProps> = ({
 
       {/* 2. Lower Handheld Emulator Control Deck (Dedicated Bottom Controller Panel in Portrait) */}
       {isPortraitEmulator && !isLocked && (
-        <div className="w-full max-w-xl sm:max-w-2xl flex justify-between items-center px-3 py-2 sm:px-5 sm:py-3 bg-gradient-to-b from-[#16152a] to-[#0c0b18] border-2 border-slate-800 pixel-box shadow-2xl mt-1.5 sm:mt-2 rounded-sm touch-none select-none">
+        <div className="w-full max-w-xl sm:max-w-2xl flex justify-between items-center px-3 py-2 sm:px-5 sm:py-3 bg-gradient-to-b from-[#16152a] to-[#0c0b18] border-2 border-slate-800 pixel-box shadow-2xl mt-auto mb-1 rounded-sm touch-none select-none">
           {/* Left: Virtual Joystick or D-Pad */}
           <div className="flex items-center justify-center shrink-0">
             {controlType === 'joystick' ? (
