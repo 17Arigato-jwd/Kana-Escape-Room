@@ -18,6 +18,19 @@ export const GamePatternMemory: React.FC<GamePatternMemoryProps> = ({ onSuccess,
 
   const seqRef = useRef<number[]>([]);
   const timersRef = useRef<number[]>([]);
+  const onSuccessRef = useRef(onSuccess);
+  onSuccessRef.current = onSuccess;
+
+  const stageRef = useRef(stage);
+  stageRef.current = stage;
+  const playerInputRef = useRef(playerInput);
+  playerInputRef.current = playerInput;
+  const isShowingPatternRef = useRef(isShowingPattern);
+  isShowingPatternRef.current = isShowingPattern;
+  const gameOverRef = useRef(gameOver);
+  gameOverRef.current = gameOver;
+  const wonRef = useRef(won);
+  wonRef.current = won;
 
   const clearAllTimers = useCallback(() => {
     timersRef.current.forEach((id) => {
@@ -31,8 +44,10 @@ export const GamePatternMemory: React.FC<GamePatternMemoryProps> = ({ onSuccess,
   const startStage = useCallback((currentStage: number) => {
     clearAllTimers();
     setIsShowingPattern(true);
+    isShowingPatternRef.current = true;
     setActiveButton(null);
     setPlayerInput([]);
+    playerInputRef.current = [];
 
     // Build random sequence of length currentStage
     const newSeq: number[] = [];
@@ -62,6 +77,7 @@ export const GamePatternMemory: React.FC<GamePatternMemoryProps> = ({ onSuccess,
       } else {
         clearInterval(interval);
         setIsShowingPattern(false);
+        isShowingPatternRef.current = false;
       }
     }, flashSpeed);
     timersRef.current.push(interval);
@@ -74,20 +90,23 @@ export const GamePatternMemory: React.FC<GamePatternMemoryProps> = ({ onSuccess,
     };
   }, [stage, startStage, clearAllTimers]);
 
-  const handleButtonClick = (num: number) => {
-    if (isShowingPattern || gameOver || won) return;
+  const handleButtonClick = useCallback((num: number) => {
+    if (isShowingPatternRef.current || gameOverRef.current || wonRef.current) return;
 
     sounds.playBlip(320 + num * 50);
     setActiveButton(num);
-    setTimeout(() => setActiveButton(null), 200);
+    const animTimer = window.setTimeout(() => setActiveButton(null), 200);
+    timersRef.current.push(animTimer);
 
-    const nextInput = [...playerInput, num];
+    const nextInput = [...playerInputRef.current, num];
+    playerInputRef.current = nextInput;
     setPlayerInput(nextInput);
 
     const stepIndex = nextInput.length - 1;
     if (seqRef.current[stepIndex] !== num) {
       // Wrong button
       sounds.playFail();
+      gameOverRef.current = true;
       setGameOver(true);
       return;
     }
@@ -95,24 +114,84 @@ export const GamePatternMemory: React.FC<GamePatternMemoryProps> = ({ onSuccess,
     // Check if stage complete
     if (nextInput.length === seqRef.current.length) {
       sounds.playSelect();
-      if (stage >= totalStages) {
+      if (stageRef.current >= totalStages) {
+        wonRef.current = true;
         setWon(true);
         sounds.playSuccess();
-        setTimeout(() => onSuccess(), 750);
+        setTimeout(() => onSuccessRef.current(), 750);
       } else {
         setTimeout(() => {
           setStage((s) => s + 1);
         }, 600);
       }
     }
-  };
+  }, [totalStages]);
 
-  const retry = () => {
+  const retry = useCallback(() => {
     clearAllTimers();
+    gameOverRef.current = false;
     setGameOver(false);
+    wonRef.current = false;
+    setWon(false);
+    playerInputRef.current = [];
+    setPlayerInput([]);
+    stageRef.current = 1;
     setStage(1);
     startStage(1);
-  };
+  }, [clearAllTimers, startStage]);
+
+  // Keyboard and Numpad support
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.repeat) return;
+
+      // Space / Enter to retry when game over
+      if (e.code === 'Space' || e.code === 'Enter') {
+        if (gameOverRef.current && !wonRef.current) {
+          e.preventDefault();
+          retry();
+          return;
+        }
+      }
+
+      // Support Numpad and Top Number row
+      const keyMap: Record<string, number> = {
+        Numpad1: 1,
+        Numpad2: 2,
+        Numpad3: 3,
+        Numpad4: 4,
+        Numpad5: 5,
+        Numpad6: 6,
+        Numpad7: 7,
+        Numpad8: 8,
+        Numpad9: 9,
+        Digit1: 1,
+        Digit2: 2,
+        Digit3: 3,
+        Digit4: 4,
+        Digit5: 5,
+        Digit6: 6,
+        Digit7: 7,
+        Digit8: 8,
+        Digit9: 9,
+      };
+
+      let num = keyMap[e.code];
+      if (!num && e.key >= '1' && e.key <= '9') {
+        num = parseInt(e.key, 10);
+      }
+
+      if (num && num >= 1 && num <= 9) {
+        e.preventDefault();
+        handleButtonClick(num);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [handleButtonClick, retry]);
 
   return (
     <div className="flex flex-col items-center select-none font-pixel w-full max-w-[500px]">
@@ -151,6 +230,10 @@ export const GamePatternMemory: React.FC<GamePatternMemoryProps> = ({ onSuccess,
           })}
         </div>
 
+        <p className="text-[10px] sm:text-xs text-slate-400 mt-3 text-center">
+          Press <span className="text-amber-300 font-bold">[1]–[9]</span> or <span className="text-cyan-400 font-bold">Numpad</span> to repeat
+        </p>
+
         {won && (
           <div className="absolute inset-0 bg-black/85 flex flex-col items-center justify-center border-2 border-emerald-400 p-4 z-20">
             <span className="text-emerald-400 text-base sm:text-lg mb-2 font-bold">PATTERN COMPLETE!</span>
@@ -165,7 +248,7 @@ export const GamePatternMemory: React.FC<GamePatternMemoryProps> = ({ onSuccess,
               onClick={retry}
               className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-xs sm:text-sm font-bold border-2 border-white cursor-pointer active:translate-y-0.5"
             >
-              RESTART FROM STAGE 1
+              RESTART FROM STAGE 1 [SPACE]
             </button>
           </div>
         )}

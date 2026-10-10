@@ -56,6 +56,22 @@ export default function App() {
     return generateShuffledRoomRewards(ROOMS);
   });
 
+  // Active room cipher hint progression per room
+  const [roomHints, setRoomHints] = useState<Record<string, { revealedCount: number; lastHintTimestamp: number }>>(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed: GameSaveState = JSON.parse(raw);
+        if (parsed.roomHints) {
+          return parsed.roomHints;
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return {};
+  });
+
   // Active interaction targets
   const [activeInteractable, setActiveInteractable] = useState<InteractableObject | null>(null);
   const [rewardKana, setRewardKana] = useState<KanaItem | null>(null);
@@ -97,6 +113,7 @@ export default function App() {
         playtimeSeconds,
         volumeEnabled,
         shuffledRewards,
+        roomHints,
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       setHasSaveData(true);
@@ -113,6 +130,7 @@ export default function App() {
     playtimeSeconds,
     volumeEnabled,
     shuffledRewards,
+    roomHints,
   ]);
 
   // Autosave when room/inventory/unlocked status changes during play
@@ -120,7 +138,7 @@ export default function App() {
     if (gameState !== 'TITLE') {
       saveGame();
     }
-  }, [gameState, inventory, completedMinigames, unlockedDoors, shuffledRewards, saveGame]);
+  }, [gameState, inventory, completedMinigames, unlockedDoors, shuffledRewards, roomHints, saveGame]);
 
   // Playtime tick
   useEffect(() => {
@@ -400,7 +418,6 @@ export default function App() {
           {/* Top Bar / HUD */}
           <HUD
             currentRoom={currentRoom}
-            currentRoomIndex={currentRoomIndex}
             inventory={inventory}
             isDoorUnlocked={isDoorUnlocked}
             onOpenInventory={() => {
@@ -411,11 +428,9 @@ export default function App() {
               sounds.playSelect();
               setGameState('PAUSED');
             }}
-            onUnlockDoor={handleUnlockDoor}
-            onSelectRoomIndex={(idx) => {
-              if (idx >= 0 && idx < ROOMS.length) {
-                setCurrentRoomIndex(idx);
-              }
+            onOpenDoorClue={() => {
+              sounds.playSelect();
+              setGameState('DOOR_CLUE');
             }}
           />
 
@@ -475,8 +490,17 @@ export default function App() {
         <DoorClueModal
           door={currentRoom.exitDoor}
           isUnlocked={isDoorUnlocked}
+          roomHint={roomHints[currentRoom.id] || { revealedCount: 0, lastHintTimestamp: 0 }}
+          onRevealHint={(newCount) => {
+            setRoomHints((prev) => ({
+              ...prev,
+              [currentRoom.id]: {
+                revealedCount: newCount,
+                lastHintTimestamp: Date.now(),
+              },
+            }));
+          }}
           onOpenDoor={handleOpenDoor}
-          onUnlockDoor={handleUnlockDoor}
           onClose={() => setGameState('PLAYING')}
         />
       )}

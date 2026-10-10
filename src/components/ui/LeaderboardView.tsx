@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { LeaderboardEntry, formatTime, clearLeaderboard } from '../../utils/leaderboard';
+import React, { useState, useEffect } from 'react';
+import { LeaderboardEntry, formatTime, clearLeaderboard, fetchLeaderboardAsync } from '../../utils/leaderboard';
 import { RunDetailsModal } from './RunDetailsModal';
 import { sounds } from '../../utils/audio';
 
@@ -16,6 +16,44 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
 }) => {
   const [showClearConfirm, setShowClearConfirm] = useState(false);
   const [inspectingRun, setInspectingRun] = useState<{ entry: LeaderboardEntry; rank: number } | null>(null);
+  const [syncing, setSyncing] = useState(false);
+  const [syncSuccess, setSyncSuccess] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    setSyncing(true);
+    fetchLeaderboardAsync()
+      .then((fresh) => {
+        if (isMounted) {
+          setSyncSuccess(true);
+          if (onRefresh) onRefresh(fresh);
+        }
+      })
+      .catch(() => {
+        if (isMounted) setSyncSuccess(false);
+      })
+      .finally(() => {
+        if (isMounted) setSyncing(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleManualRefresh = async () => {
+    sounds.playSelect();
+    setSyncing(true);
+    try {
+      const fresh = await fetchLeaderboardAsync();
+      setSyncSuccess(true);
+      if (onRefresh) onRefresh(fresh);
+    } catch {
+      setSyncSuccess(false);
+    } finally {
+      setSyncing(false);
+    }
+  };
 
   const handleReset = () => {
     const fresh = clearLeaderboard();
@@ -26,6 +64,37 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
 
   return (
     <div className="w-full flex flex-col items-center">
+      {/* Live Cloud Status Header */}
+      <div className="w-full flex justify-between items-center mb-2 px-1 text-[9px] font-pixel">
+        <div className="flex items-center gap-1.5">
+          <span
+            className={`inline-block w-2 h-2 rounded-full ${
+              syncing
+                ? 'bg-yellow-400 animate-ping'
+                : syncSuccess === false
+                ? 'bg-amber-500'
+                : 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]'
+            }`}
+          />
+          {syncing ? (
+            <span className="text-yellow-400">SYNCING LIVE LEADERBOARD...</span>
+          ) : syncSuccess === false ? (
+            <span className="text-amber-400">OFFLINE MODE (SAVED LOCALLY)</span>
+          ) : (
+            <span className="text-emerald-400">LIVE GLOBAL SYNC ACTIVE</span>
+          )}
+        </div>
+        <button
+          onClick={handleManualRefresh}
+          disabled={syncing}
+          className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 active:translate-y-0.5 text-yellow-300 border border-slate-600 cursor-pointer flex items-center gap-1 transition-colors disabled:opacity-50 text-[9px]"
+          title="Fetch latest runs across all players & devices"
+        >
+          <span className={syncing ? 'animate-spin inline-block' : 'inline-block'}>🔄</span>
+          <span>{syncing ? 'SYNCING...' : 'REFRESH'}</span>
+        </button>
+      </div>
+
       {/* Table Container */}
       <div className="w-full bg-slate-950 border-2 border-slate-700 rounded-sm overflow-hidden shadow-xl">
         {/* Table Header */}

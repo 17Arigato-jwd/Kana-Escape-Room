@@ -20,6 +20,7 @@ interface Particle {
 export const GameWallBreaker: React.FC<GameWallBreakerProps> = ({ onSuccess }) => {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [score, setScore] = useState(0);
+  const [bricksLeft, setBricksLeft] = useState(24);
   const [speedVal, setSpeedVal] = useState('1.0x');
   const [won, setWon] = useState(false);
   const [gameOver, setGameOver] = useState(false);
@@ -100,6 +101,7 @@ export const GameWallBreaker: React.FC<GameWallBreakerProps> = ({ onSuccess }) =
     };
     particlesRef.current = [];
     setScore(0);
+    setBricksLeft(24);
     setSpeedVal('1.0x');
     setWon(false);
     setGameOver(false);
@@ -171,10 +173,12 @@ export const GameWallBreaker: React.FC<GameWallBreakerProps> = ({ onSuccess }) =
               s.score += 10;
               setScore(s.score);
 
-              // PROGRESSIVE SPEED DIFFICULTY AFTER EVERY HIT (+4% compound!)
-              s.speedFactor *= 1.04;
-              s.ballVx *= 1.04;
-              s.ballVy *= 1.04;
+              // PROGRESSIVE SPEED DIFFICULTY: Gentler scaling (+1.5% compound) capped at 1.45x for high playability
+              const prevSpeed = s.speedFactor;
+              s.speedFactor = Math.min(1.45, s.speedFactor * 1.015);
+              const speedRatio = s.speedFactor / prevSpeed;
+              s.ballVx *= speedRatio;
+              s.ballVy *= speedRatio;
               setSpeedVal(`${s.speedFactor.toFixed(1)}x`);
 
               // Particle explosion effect!
@@ -185,9 +189,10 @@ export const GameWallBreaker: React.FC<GameWallBreakerProps> = ({ onSuccess }) =
           }
         }
 
-        // Win condition: Clear bricks
+        // Win condition: All bricks must be eliminated!
         const remaining = s.bricks.filter((b) => b.alive).length;
-        if (remaining === 0 || s.score >= 180) {
+        setBricksLeft(remaining);
+        if (remaining === 0) {
           s.won = true;
           setWon(true);
           sounds.playSuccess();
@@ -269,12 +274,20 @@ export const GameWallBreaker: React.FC<GameWallBreakerProps> = ({ onSuccess }) =
     return () => cancelAnimationFrame(animId);
   }, []);
 
+  const restartRef = useRef(restart);
+  restartRef.current = restart;
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (['ArrowLeft', 'KeyA'].includes(e.code)) stateRef.current.keys.left = true;
       if (['ArrowRight', 'KeyD'].includes(e.code)) stateRef.current.keys.right = true;
       if (['Space', 'Enter'].includes(e.code)) {
-        stateRef.current.started = true;
+        e.preventDefault();
+        if (stateRef.current.gameOver && !stateRef.current.won) {
+          restartRef.current();
+        } else {
+          stateRef.current.started = true;
+        }
       }
     };
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -293,8 +306,9 @@ export const GameWallBreaker: React.FC<GameWallBreakerProps> = ({ onSuccess }) =
     <div className="flex flex-col items-center select-none font-pixel w-full max-w-[580px]">
       <div className="flex justify-between items-center w-full mb-2 text-xs sm:text-sm px-1">
         <span className="text-amber-400 font-bold">SCORE: {score}</span>
+        <span className="text-cyan-400 font-mono text-[10px] sm:text-xs font-bold">BRICKS LEFT: {bricksLeft}/24</span>
         <span className="text-yellow-400 font-mono text-[10px] sm:text-xs">SPEED: {speedVal}</span>
-        <span className="text-rose-400 text-[10px] sm:text-xs font-mono">1 LIFE (NO RESPAWNS)</span>
+        <span className="text-rose-400 text-[10px] sm:text-xs font-mono">1 LIFE</span>
       </div>
 
       <div
@@ -354,7 +368,7 @@ export const GameWallBreaker: React.FC<GameWallBreakerProps> = ({ onSuccess }) =
               onClick={restart}
               className="px-5 py-2 bg-red-600 hover:bg-red-500 text-white text-xs border-2 border-white cursor-pointer active:translate-y-0.5"
             >
-              TRY AGAIN
+              TRY AGAIN [SPACE]
             </button>
           </div>
         )}

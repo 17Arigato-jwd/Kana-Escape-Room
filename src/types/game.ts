@@ -114,4 +114,5 @@ export interface GameSaveState {
   playtimeSeconds: number;
   volumeEnabled: boolean;
   shuffledRewards?: Record<string, KanaItem>;
+  roomHints?: Record<string, { revealedCount: number; lastHintTimestamp: number }>;
 }

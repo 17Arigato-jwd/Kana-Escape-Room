@@ -20,7 +20,6 @@ const OLD_STORAGE_KEY = 'kana_escape_leaderboard_v1';
 
 export const getLeaderboard = (): LeaderboardEntry[] => {
   try {
-    // Clear out any obsolete fake-name storage from previous version
     if (localStorage.getItem(OLD_STORAGE_KEY)) {
       localStorage.removeItem(OLD_STORAGE_KEY);
     }
@@ -39,7 +38,43 @@ export const getLeaderboard = (): LeaderboardEntry[] => {
   return [];
 };
 
-const sortLeaderboard = (entries: LeaderboardEntry[]): LeaderboardEntry[] => {
+export const fetchLeaderboardAsync = async (): Promise<LeaderboardEntry[]> => {
+  const local = getLeaderboard();
+  try {
+    const res = await fetch('/api/leaderboard', { cache: 'no-store' });
+    if (res.ok) {
+      const serverEntries: LeaderboardEntry[] = await res.json();
+      if (Array.isArray(serverEntries)) {
+        // Merge server and local runs, deduplicate by unique id
+        const map = new Map<string, LeaderboardEntry>();
+        serverEntries.forEach((e) => map.set(e.id, e));
+        local.forEach((e) => {
+          if (!map.has(e.id)) {
+            map.set(e.id, e);
+            // Sync local-only run to cloud in background
+            fetch('/api/leaderboard', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(e),
+            }).catch(() => {});
+          }
+        });
+        const merged = sortLeaderboard(Array.from(map.values())).slice(0, 50);
+        try {
+          localStorage.setItem(LEADERBOARD_STORAGE_KEY, JSON.stringify(merged));
+        } catch {
+          // ignore
+        }
+        return merged;
+      }
+    }
+  } catch {
+    // Offline or server unreachable: return cached local runs
+  }
+  return local;
+};
+
+export const sortLeaderboard = (entries: LeaderboardEntry[]): LeaderboardEntry[] => {
   return [...entries].sort((a, b) => {
     // Primary sort: fastest escape time (lowest seconds)
     if (a.playtimeSeconds !== b.playtimeSeconds) {
@@ -86,12 +121,21 @@ export const saveLeaderboardEntry = (params: {
     formattedDate,
   };
 
-  const updated = sortLeaderboard([...current, newEntry]).slice(0, 30);
+  const updated = sortLeaderboard([...current, newEntry]).slice(0, 50);
 
   try {
     localStorage.setItem(LEADERBOARD_STORAGE_KEY, JSON.stringify(updated));
   } catch {
     // ignore
+  }
+
+  // Asynchronously broadcast new run to Cloudflare live leaderboard
+  if (typeof window !== 'undefined' && typeof fetch !== 'undefined') {
+    fetch('/api/leaderboard', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newEntry),
+    }).catch(() => {});
   }
 
   const rank = updated.findIndex((e) => e.id === newEntry.id) + 1;
