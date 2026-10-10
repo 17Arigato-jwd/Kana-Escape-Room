@@ -86,10 +86,11 @@ export const GameTimedCode: React.FC<GameTimedCodeProps> = ({ onSuccess, codeLen
     if (gameOver || won) return;
     if (enteredCode.length >= codeLength) return;
 
-    sounds.playBlip(480 + parseInt(d, 10) * 30);
     const info = JAPANESE_DIGITS[d];
     if (info) {
       sounds.speakJapanese(info.kana);
+    } else {
+      sounds.playBlip(480 + parseInt(d, 10) * 30);
     }
 
     const next = enteredCode + d;
