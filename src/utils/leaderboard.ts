@@ -196,3 +196,109 @@ export const formatTime = (secs: number): string => {
   const s = secs % 60;
   return `${mins}:${s.toString().padStart(2, '0')}`;
 };
+
+export const DEFAULT_ADMIN_KEY = 'kana-admin-2026';
+
+export const deleteLeaderboardRunAsync = async (
+  runId: string,
+  adminKey: string
+): Promise<{ success: boolean; allEntries: LeaderboardEntry[]; error?: string }> => {
+  let allEntries: LeaderboardEntry[] = [];
+  let success = false;
+
+  // 1. Try Cloudflare Pages Edge API
+  try {
+    const res = await fetch('/api/leaderboard', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-key': adminKey,
+      },
+      body: JSON.stringify({ runId, adminKey }),
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      if (data && Array.isArray(data.allEntries)) {
+        allEntries = data.allEntries;
+        success = true;
+      }
+    } else if (res.status === 401) {
+      return { success: false, allEntries: getLeaderboard(), error: 'Incorrect Admin Key' };
+    }
+  } catch {
+    // fallback
+  }
+
+  // 2. Direct cloud bin fallback if Edge API was unavailable or local
+  if (!success) {
+    if (adminKey !== DEFAULT_ADMIN_KEY) {
+      return { success: false, allEntries: getLeaderboard(), error: 'Incorrect Admin Key' };
+    }
+    const current = await fetchLeaderboardAsync();
+    allEntries = current.filter((e) => e.id !== runId);
+    try {
+      await fetch(GLOBAL_BIN_URL, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Security-key': GLOBAL_SECURITY_KEY,
+        },
+        body: JSON.stringify({ runs: allEntries }),
+      });
+      success = true;
+    } catch {}
+  }
+
+  // Update local storage
+  try {
+    localStorage.setItem(LEADERBOARD_STORAGE_KEY, JSON.stringify(allEntries));
+  } catch {}
+
+  return { success, allEntries, error: success ? undefined : 'Failed to delete run' };
+};
+
+export const resetGlobalLeaderboardAsync = async (
+  adminKey: string
+): Promise<{ success: boolean; allEntries: LeaderboardEntry[]; error?: string }> => {
+  let success = false;
+
+  // 1. Try Cloudflare Pages Edge API
+  try {
+    const res = await fetch('/api/leaderboard', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-admin-key': adminKey,
+      },
+      body: JSON.stringify({ action: 'reset', adminKey }),
+    });
+
+    if (res.ok) {
+      success = true;
+    } else if (res.status === 401) {
+      return { success: false, allEntries: getLeaderboard(), error: 'Incorrect Admin Key' };
+    }
+  } catch {}
+
+  // 2. Direct cloud bin fallback
+  if (!success) {
+    if (adminKey !== DEFAULT_ADMIN_KEY) {
+      return { success: false, allEntries: getLeaderboard(), error: 'Incorrect Admin Key' };
+    }
+    try {
+      await fetch(GLOBAL_BIN_URL, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Security-key': GLOBAL_SECURITY_KEY,
+        },
+        body: JSON.stringify({ runs: [] }),
+      });
+      success = true;
+    } catch {}
+  }
+
+  clearLeaderboard();
+  return { success, allEntries: [], error: success ? undefined : 'Failed to reset leaderboard' };
+};

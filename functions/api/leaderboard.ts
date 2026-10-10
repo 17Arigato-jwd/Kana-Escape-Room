@@ -17,10 +17,12 @@ interface Env {
     get: (key: string, type?: 'text' | 'json') => Promise<any>;
     put: (key: string, value: string) => Promise<void>;
   };
+  LEADERBOARD_ADMIN_KEY?: string;
 }
 
 const GLOBAL_BIN_URL = 'https://extendsclass.com/api/json-storage/bin/adadbea';
 const GLOBAL_SECURITY_KEY = 'kana-escape-room-2026-secret-key';
+const DEFAULT_ADMIN_KEY = 'kana-admin-2026';
 
 // In-memory fallback across warm edge nodes
 let memoryLeaderboard: LeaderboardEntry[] = [];
@@ -28,8 +30,8 @@ let memoryLeaderboard: LeaderboardEntry[] = [];
 const CORS_HEADERS = {
   'Content-Type': 'application/json',
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, x-admin-key',
   'Cache-Control': 'no-cache, no-store, must-revalidate',
 };
 
@@ -163,6 +165,62 @@ export const onRequestPost = async (context: { request: Request; env: Env }) => 
     });
   } catch (err: any) {
     return new Response(JSON.stringify({ error: err?.message || 'Failed to save entry' }), {
+      status: 500,
+      headers: CORS_HEADERS,
+    });
+  }
+};
+
+export const onRequestDelete = async (context: { request: Request; env: Env }) => {
+  try {
+    let body: any = {};
+    try {
+      body = await context.request.json();
+    } catch {}
+
+    const authKey = body?.adminKey || context.request.headers.get('x-admin-key');
+    const validKey = context.env?.LEADERBOARD_ADMIN_KEY || DEFAULT_ADMIN_KEY;
+
+    if (!authKey || authKey !== validKey) {
+      return new Response(JSON.stringify({ error: 'Unauthorized: Invalid admin key' }), {
+        status: 401,
+        headers: CORS_HEADERS,
+      });
+    }
+
+    const runId = body?.runId;
+    const action = body?.action; // 'reset' or specific 'runId'
+
+    let entries = await fetchRemoteEntries();
+    if (context.env?.LEADERBOARD_KV) {
+      try {
+        const kvData = await context.env.LEADERBOARD_KV.get('global_leaderboard', 'json');
+        if (Array.isArray(kvData) && kvData.length > 0) entries = kvData;
+      } catch {}
+    }
+
+    if (action === 'reset' || !runId) {
+      entries = [];
+    } else {
+      entries = entries.filter((e) => e.id !== runId);
+    }
+
+    memoryLeaderboard = entries;
+
+    if (context.env?.LEADERBOARD_KV) {
+      try {
+        await context.env.LEADERBOARD_KV.put('global_leaderboard', JSON.stringify(entries));
+      } catch {}
+    }
+
+    await saveRemoteEntries(entries);
+
+    return new Response(JSON.stringify({ success: true, allEntries: entries }), {
+      status: 200,
+      headers: CORS_HEADERS,
+    });
+  } catch (err: any) {
+    return new Response(JSON.stringify({ error: err?.message || 'Delete operation failed' }), {
       status: 500,
       headers: CORS_HEADERS,
     });

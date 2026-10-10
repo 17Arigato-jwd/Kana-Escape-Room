@@ -1,5 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { LeaderboardEntry, formatTime, clearLeaderboard, fetchLeaderboardAsync } from '../../utils/leaderboard';
+import {
+  LeaderboardEntry,
+  formatTime,
+  clearLeaderboard,
+  fetchLeaderboardAsync,
+  deleteLeaderboardRunAsync,
+  resetGlobalLeaderboardAsync,
+  DEFAULT_ADMIN_KEY,
+} from '../../utils/leaderboard';
 import { RunDetailsModal } from './RunDetailsModal';
 import { sounds } from '../../utils/audio';
 
@@ -18,6 +26,20 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
   const [inspectingRun, setInspectingRun] = useState<{ entry: LeaderboardEntry; rank: number } | null>(null);
   const [syncing, setSyncing] = useState(false);
   const [syncSuccess, setSyncSuccess] = useState<boolean | null>(null);
+
+  // Admin Controls State
+  const [adminKey, setAdminKey] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('kana_leaderboard_admin_key') || '';
+    }
+    return '';
+  });
+  const [showAdminModal, setShowAdminModal] = useState(false);
+  const [adminInput, setAdminInput] = useState('');
+  const [adminError, setAdminError] = useState('');
+  const [targetToDelete, setTargetToDelete] = useState<LeaderboardEntry | null>(null);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -55,7 +77,63 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
     }
   };
 
-  const handleReset = () => {
+  const handleUnlockAdmin = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const key = adminInput.trim();
+    if (!key) return;
+    if (key === DEFAULT_ADMIN_KEY) {
+      sessionStorage.setItem('kana_leaderboard_admin_key', key);
+      setAdminKey(key);
+      setShowAdminModal(false);
+      setAdminError('');
+      sounds.playKanaObtained();
+    } else {
+      setAdminError('Incorrect Admin Passcode');
+      sounds.playFail();
+    }
+  };
+
+  const handleLockAdmin = () => {
+    sessionStorage.removeItem('kana_leaderboard_admin_key');
+    setAdminKey('');
+    sounds.playSelect();
+  };
+
+  const handleDeleteRun = async (entry: LeaderboardEntry) => {
+    sounds.playFail();
+    setActionLoading(true);
+    try {
+      const res = await deleteLeaderboardRunAsync(entry.id, adminKey);
+      if (res.success) {
+        sounds.playKanaObtained();
+        if (onRefresh) onRefresh(res.allEntries);
+      } else {
+        alert(res.error || 'Failed to delete run');
+      }
+    } finally {
+      setActionLoading(false);
+      setTargetToDelete(null);
+    }
+  };
+
+  const handleResetGlobal = async () => {
+    sounds.playExplosion();
+    setActionLoading(true);
+    try {
+      const res = await resetGlobalLeaderboardAsync(adminKey);
+      if (res.success) {
+        sounds.playKanaObtained();
+        if (onRefresh) onRefresh([]);
+        setShowResetConfirm(false);
+      } else {
+        alert(res.error || 'Failed to reset leaderboard');
+      }
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleResetLocal = () => {
     const fresh = clearLeaderboard();
     sounds.playFail();
     setShowClearConfirm(false);
@@ -64,11 +142,11 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
 
   return (
     <div className="w-full flex flex-col items-center">
-      {/* Live Cloud Status Header */}
-      <div className="w-full flex justify-between items-center mb-2 px-1 text-[9px] font-pixel">
-        <div className="flex items-center gap-1.5">
+      {/* Live Cloud Status Header & Admin Toggle */}
+      <div className="w-full flex justify-between items-center mb-2 px-1 text-[9px] font-pixel gap-2">
+        <div className="flex items-center gap-1.5 min-w-0">
           <span
-            className={`inline-block w-2 h-2 rounded-full ${
+            className={`inline-block w-2 h-2 rounded-full shrink-0 ${
               syncing
                 ? 'bg-yellow-400 animate-ping'
                 : syncSuccess === false
@@ -77,22 +155,51 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
             }`}
           />
           {syncing ? (
-            <span className="text-yellow-400">SYNCING LIVE LEADERBOARD...</span>
+            <span className="text-yellow-400 truncate">SYNCING LIVE LEADERBOARD...</span>
           ) : syncSuccess === false ? (
-            <span className="text-amber-400">OFFLINE MODE (SAVED LOCALLY)</span>
+            <span className="text-amber-400 truncate">OFFLINE MODE (LOCAL)</span>
           ) : (
-            <span className="text-emerald-400">LIVE GLOBAL SYNC ACTIVE</span>
+            <span className="text-emerald-400 truncate">LIVE GLOBAL SYNC ACTIVE</span>
           )}
         </div>
-        <button
-          onClick={handleManualRefresh}
-          disabled={syncing}
-          className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 active:translate-y-0.5 text-yellow-300 border border-slate-600 cursor-pointer flex items-center gap-1 transition-colors disabled:opacity-50 text-[9px]"
-          title="Fetch latest runs across all players & devices"
-        >
-          <span className={syncing ? 'animate-spin inline-block' : 'inline-block'}>🔄</span>
-          <span>{syncing ? 'SYNCING...' : 'REFRESH'}</span>
-        </button>
+
+        <div className="flex items-center gap-1.5 shrink-0">
+          {adminKey ? (
+            <div className="flex items-center gap-1 bg-yellow-950/80 px-1.5 py-0.5 border border-yellow-500 rounded text-[8px]">
+              <span className="text-yellow-300 font-bold">👑 ADMIN</span>
+              <button
+                onClick={handleLockAdmin}
+                className="text-[8px] text-slate-400 hover:text-white underline cursor-pointer ml-0.5"
+                title="Lock Admin Mode"
+              >
+                LOCK
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => {
+                sounds.playSelect();
+                setAdminInput('');
+                setAdminError('');
+                setShowAdminModal(true);
+              }}
+              className="px-1.5 py-0.5 bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-yellow-300 border border-slate-700 rounded cursor-pointer text-[8px]"
+              title="Enter Admin Passcode to remove runs or reset"
+            >
+              ⚙️ ADMIN
+            </button>
+          )}
+
+          <button
+            onClick={handleManualRefresh}
+            disabled={syncing}
+            className="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 active:translate-y-0.5 text-yellow-300 border border-slate-600 cursor-pointer flex items-center gap-1 transition-colors disabled:opacity-50 text-[9px]"
+            title="Fetch latest runs across all players & devices"
+          >
+            <span className={syncing ? 'animate-spin inline-block' : 'inline-block'}>🔄</span>
+            <span>{syncing ? 'SYNCING...' : 'REFRESH'}</span>
+          </button>
+        </div>
       </div>
 
       {/* Table Container */}
@@ -103,7 +210,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
           <span className="col-span-4 text-left">RUN NAME</span>
           <span className="col-span-2 text-center">CHAR</span>
           <span className="col-span-2 text-center">KANA</span>
-          <span className="col-span-2 text-right">TIME</span>
+          <span className="col-span-2 text-right">{adminKey ? 'ACTIONS' : 'TIME'}</span>
         </div>
 
         {/* Entries List */}
@@ -172,12 +279,26 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                     {entry.totalKana}
                   </div>
 
-                  {/* Escape Time */}
+                  {/* Escape Time / Admin Delete Button */}
                   <div className="col-span-2 text-right font-mono font-bold text-yellow-300 flex items-center justify-end gap-1">
                     <span>{formatTime(entry.playtimeSeconds)}</span>
-                    <span className="text-[8px] text-slate-500 group-hover:text-amber-400 opacity-60 group-hover:opacity-100">
-                      ➔
-                    </span>
+                    {adminKey ? (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setTargetToDelete(entry);
+                        }}
+                        disabled={actionLoading}
+                        className="ml-1 px-1.5 py-0.5 bg-red-900/90 hover:bg-red-700 text-white border border-red-400 text-[8px] rounded cursor-pointer active:scale-95 transition-all"
+                        title={`Admin: Delete "${displayName}"`}
+                      >
+                        🗑️
+                      </button>
+                    ) : (
+                      <span className="text-[8px] text-slate-500 group-hover:text-amber-400 opacity-60 group-hover:opacity-100">
+                        ➔
+                      </span>
+                    )}
                   </div>
                 </div>
               );
@@ -186,22 +307,55 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
         </div>
       </div>
 
-      {/* Sub-footer options & Helper hint */}
-      <div className="w-full flex justify-between items-center text-[9px] font-pixel text-slate-400 mt-2 px-1">
-        <span className="text-amber-400/90">💡 Click any run to inspect summary &amp; words</span>
-        {entries.length > 0 && (
-          !showClearConfirm ? (
+      {/* Sub-footer options & Admin Actions */}
+      <div className="w-full flex flex-col sm:flex-row justify-between items-center text-[9px] font-pixel text-slate-400 mt-2 px-1 gap-1.5">
+        <span className="text-amber-400/90">
+          {adminKey
+            ? '👑 Admin Mode: Click 🗑️ on any row to delete that run'
+            : '💡 Click any run to inspect summary & words'}
+        </span>
+
+        {adminKey ? (
+          !showResetConfirm ? (
+            <button
+              onClick={() => setShowResetConfirm(true)}
+              disabled={actionLoading}
+              className="text-rose-400 hover:text-rose-300 font-bold underline cursor-pointer"
+            >
+              ⚠️ RESET ALL GLOBAL RECORDS
+            </button>
+          ) : (
+            <div className="flex items-center gap-1.5 bg-red-950/90 border border-red-500 px-2 py-1">
+              <span className="text-rose-200">Wipe entire leaderboard?</span>
+              <button
+                onClick={handleResetGlobal}
+                disabled={actionLoading}
+                className="px-2 py-0.5 bg-rose-600 hover:bg-rose-500 text-white font-bold border border-white cursor-pointer active:scale-95"
+              >
+                {actionLoading ? 'WIPING...' : 'YES, WIPE ALL'}
+              </button>
+              <button
+                onClick={() => setShowResetConfirm(false)}
+                className="text-slate-400 hover:text-white cursor-pointer ml-1"
+              >
+                CANCEL
+              </button>
+            </div>
+          )
+        ) : (
+          entries.length > 0 &&
+          (!showClearConfirm ? (
             <button
               onClick={() => setShowClearConfirm(true)}
               className="text-slate-500 hover:text-red-400 transition-colors cursor-pointer underline"
             >
-              Clear Records
+              Clear Local Records
             </button>
           ) : (
             <div className="flex items-center gap-2">
-              <span className="text-rose-400">Clear all records?</span>
+              <span className="text-rose-400">Clear local records?</span>
               <button
-                onClick={handleReset}
+                onClick={handleResetLocal}
                 className="text-rose-400 hover:text-rose-300 font-bold underline cursor-pointer"
               >
                 YES
@@ -213,9 +367,105 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                 NO
               </button>
             </div>
-          )
+          ))
         )}
       </div>
+
+      {/* Admin Passcode Modal */}
+      {showAdminModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-xs p-3">
+          <form
+            onSubmit={handleUnlockAdmin}
+            className="bg-[#18162e] border-4 border-yellow-400 pixel-box-gold p-4 max-w-sm w-full flex flex-col gap-3 shadow-2xl animate-in fade-in zoom-in-95"
+          >
+            <div className="flex items-center gap-1.5 pb-2 border-b border-slate-700">
+              <span className="text-lg">👑</span>
+              <h3 className="font-pixel text-xs text-yellow-300">ADMIN AUTHENTICATION</h3>
+            </div>
+
+            <p className="font-pixel text-[10px] text-slate-300 leading-relaxed">
+              Enter the Admin Passcode to manage or delete global leaderboard runs:
+            </p>
+
+            <input
+              type="password"
+              autoFocus
+              value={adminInput}
+              onChange={(e) => {
+                setAdminInput(e.target.value);
+                setAdminError('');
+              }}
+              placeholder="Passcode..."
+              className="w-full px-3 py-1.5 bg-slate-950 border-2 border-slate-600 focus:border-yellow-400 text-white text-xs font-mono outline-none"
+            />
+
+            {adminError && (
+              <span className="font-pixel text-[9px] text-red-400 animate-pulse">
+                ❌ {adminError}
+              </span>
+            )}
+
+            <div className="flex justify-end gap-2 pt-1 border-t border-slate-800">
+              <button
+                type="button"
+                onClick={() => setShowAdminModal(false)}
+                className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-pixel text-[10px] border border-slate-600 cursor-pointer"
+              >
+                CANCEL
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-1 bg-yellow-500 hover:bg-yellow-400 text-black font-pixel font-bold text-[10px] border-2 border-white cursor-pointer active:translate-y-0.5"
+              >
+                UNLOCK
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Single Run Delete Confirmation Modal */}
+      {targetToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-xs p-3">
+          <div className="bg-[#18162e] border-4 border-red-500 pixel-box p-4 max-w-sm w-full flex flex-col gap-3 shadow-2xl animate-in fade-in zoom-in-95">
+            <div className="flex items-center gap-1.5 pb-2 border-b border-slate-700">
+              <span className="text-lg">🗑️</span>
+              <h3 className="font-pixel text-xs text-red-400">CONFIRM RUN DELETION</h3>
+            </div>
+
+            <p className="font-pixel text-[10px] text-slate-200 leading-relaxed">
+              Are you sure you want to permanently delete run:
+            </p>
+
+            <div className="bg-slate-950 border border-slate-700 p-2 text-center font-pixel text-xs text-yellow-300">
+              "{targetToDelete.runName}" ({formatTime(targetToDelete.playtimeSeconds)})
+            </div>
+
+            <p className="font-pixel text-[9px] text-slate-400">
+              This will remove it from all players' leaderboards globally.
+            </p>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-800">
+              <button
+                type="button"
+                disabled={actionLoading}
+                onClick={() => setTargetToDelete(null)}
+                className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-pixel text-[10px] border border-slate-600 cursor-pointer"
+              >
+                CANCEL
+              </button>
+              <button
+                type="button"
+                disabled={actionLoading}
+                onClick={() => handleDeleteRun(targetToDelete)}
+                className="px-4 py-1 bg-red-600 hover:bg-red-500 text-white font-pixel font-bold text-[10px] border-2 border-white cursor-pointer active:translate-y-0.5"
+              >
+                {actionLoading ? 'DELETING...' : 'CONFIRM DELETE'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Run Details Modal */}
       {inspectingRun && (
